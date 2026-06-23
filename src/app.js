@@ -7,10 +7,8 @@ import customerRoutes from "./routes/customerRoutes.js";
 import supplierRoutes from "./routes/supplierRoutes.js";
 import journalEntryRoutes from "./routes/journalEntryRoutes.js";
 import salesInvoiceRoutes from "./routes/salesInvoiceRoutes.js";
-
-
+import purchaseInvoiceRoutes from "./routes/purchaseInvoiceRoutes.js";
 const ApiError = require("./utils/ApiError");
-
 
 const app = express();
 
@@ -23,14 +21,13 @@ app.use("/api/suppliers", supplierRoutes);
 app.use("/api/journal-entries", journalEntryRoutes);
 app.use("/api/sales-invoices", salesInvoiceRoutes);
 app.use("/api/v1", routes);
+app.use("/api/purchase-invoices", purchaseInvoiceRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("*", (req, res, next) => {
   next(
     new ApiError(404, `Route ${req.originalUrl} not found`, "ROUTE_NOT_FOUND"),
   );
 });
-
-
 
 app.use(errorHandler);
 
