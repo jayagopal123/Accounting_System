@@ -4,6 +4,11 @@ const routes = require("./routes");
 const accountRoutes = require("./routes/accountRoutes");
 const errorHandler = require("./middleware/errorHandler");
 import customerRoutes from "./routes/customerRoutes.js";
+import supplierRoutes from "./routes/supplierRoutes.js";
+import journalEntryRoutes from "./routes/journalEntryRoutes.js";
+import salesInvoiceRoutes from "./routes/salesInvoiceRoutes.js";
+
+
 const ApiError = require("./utils/ApiError");
 
 
@@ -14,9 +19,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use("/api/customers", customerRoutes);
-
-
-// 2. Mount API Routes under v1 namespace
+app.use("/api/suppliers", supplierRoutes);
+app.use("/api/journal-entries", journalEntryRoutes);
+app.use("/api/sales-invoices", salesInvoiceRoutes);
 app.use("/api/v1", routes);
 app.use("/api/accounts", accountRoutes);
 app.use("*", (req, res, next) => {
@@ -24,6 +29,8 @@ app.use("*", (req, res, next) => {
     new ApiError(404, `Route ${req.originalUrl} not found`, "ROUTE_NOT_FOUND"),
   );
 });
+
+
 
 app.use(errorHandler);
 
