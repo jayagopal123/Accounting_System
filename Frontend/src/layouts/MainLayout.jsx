@@ -3,15 +3,18 @@ import Navbar from "../components/Navbar";
 
 function MainLayout({ children }) {
   return (
-    <div className="container-fluid app-shell">
-      <div className="row g-0">
-        <div className="col-12 col-lg-3 col-xl-2">
-          <Sidebar />
-        </div>
-        <div className="col-12 col-lg-9 col-xl-10 content-shell">
-          <Navbar />
-          <main className="p-3 p-md-4">{children}</main>
-        </div>
+    <div className="d-flex w-100 app-shell" style={{ minHeight: "100vh" }}>
+      {/* Sidebar Anchor with Strict Width */}
+      <div style={{ width: "260px", flexShrink: 0 }}>
+        <Sidebar />
+      </div>
+      
+      {/* Main Workspace Engine */}
+      <div className="d-flex flex-column flex-grow-1 min-w-0">
+        <Navbar />
+        <main className="p-4 flex-grow-1 bg-light">
+          {children}
+        </main>
       </div>
     </div>
   );

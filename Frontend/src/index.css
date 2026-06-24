@@ -1,8 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ==========================================================================
+   1. GLOBAL SYSTEM CORE RESET & COLORS
+   ========================================================================== */
 body {
   margin: 0;
-  background: #f4f6f9;
-  color: #0f172a;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8fafc !important; /* Soft Premium Off-White Canvas */
+  color: #0f172a !important; /* Stark Ink Charcoal Text */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  letter-spacing: -0.015em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
@@ -10,11 +18,436 @@ body {
 }
 
 a {
-  text-decoration: none;
+  text-decoration: none !important;
+  color: inherit;
 }
 
-.form-control:focus,
-.form-select:focus,
-.btn:focus {
-  box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.15);
+/* ==========================================================================
+   2. SHARP FORM CONTROLS & ACTION BUTTONS
+   ========================================================================== */
+.form-control, .form-select {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  font-size: 0.8125rem !important;
+  padding: 0.45rem 0.75rem !important;
+  color: #0f172a !important;
+}
+
+.form-control:focus, .form-select:focus {
+  outline: none !important;
+  border-color: #0f172a !important;
+  box-shadow: 0 0 0 1px #0f172a !important;
+}
+
+.form-label {
+  font-size: 0.725rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: #475569 !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.btn {
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  padding: 0.45rem 0.875rem !important;
+  border-radius: 6px !important;
+}
+
+.btn-primary {
+  background-color: #0f172a !important;
+  border-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
+.btn-primary:hover {
+  background-color: #1e293b !important;
+  border-color: #1e293b !important;
+}
+
+.btn-outline-primary {
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+  background-color: #ffffff !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: #f8fafc !important;
+  border-color: #0f172a !important;
+  color: #0f172a !important;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+/* ==========================================================================
+   3. LUXURY DARK SIDEBAR SHELL
+   ========================================================================== */
+.sidebar-shell {
+  height: 100vh;
+  background-color: #0f172a !important; /* Premium Dark Charcoal Surface */
+  border-right: 1px solid #1e293b !important;
+  position: sticky !important;
+  top: 0;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 260px !important;
+}
+
+/* സൈഡ്ബാറിലെ ബ്രാൻഡ് ടെക്സ്റ്റുകൾ വൈറ്റാക്കാൻ */
+.sidebar-shell .text-dark {
+  color: #ffffff !important;
+}
+
+.sidebar-link {
+  color: #94a3b8 !important; /* Subtle Muted Slate Link Color */
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  padding: 0.625rem 0.875rem !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease;
+}
+
+.sidebar-link:hover {
+  color: #ffffff !important;
+  background-color: #1e293b !important; /* Deep Surface Hover */
+}
+
+.sidebar-link.active {
+  color: #ffffff !important;
+  background-color: #1e293b !important;
+  font-weight: 600 !important;
+  box-shadow: inset 3px 0 0 0 #059669 !important; /* Accounting Emerald Accent Indicator */
+}
+
+.sidebar-section {
+  color: #475569 !important; /* Deep Slate Section Dividers */
+  font-size: 0.65rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  margin: 1.5rem 0.875rem 0.5rem !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+
+/* ==========================================================================
+   4. WHITE TOPBAR (HEADER) UTILITIES
+   ========================================================================== */
+.topbar {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  height: 65px;
+  display: flex;
+  align-items: center;
+}
+
+.workspace-pill {
+  background-color: #f1f5f9;
+  padding: 0.35rem 0.75rem;
+  border-radius: 99px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.workspace-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #059669;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.topbar-search {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  width: 220px;
+  transition: all 0.15s ease;
+}
+
+.topbar-search:focus {
+  outline: none;
+  background-color: #ffffff;
+  border-color: #0f172a;
+  width: 260px;
+}
+
+.avatar-circle {
+  width: 28px;
+  height: 28px;
+  background-color: #0f172a;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.02em;
+}
+
+/* ==========================================================================
+   5. SOLID DATA METRIC CARDS & WORKSPACE
+   ========================================================================== */
+.page-card {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03) !important;
+}
+
+a.stat-card, a.stat-card:hover, a.stat-card:focus, a.stat-card:active {
+  text-decoration: none !important;
+  color: #0f172a !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  padding: 1.25rem !important;
+  height: 100% !important;
+  min-height: 135px !important;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03) !important;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease !important;
+}
+
+a.stat-card:hover {
+  border-color: #0f172a !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
+}
+
+a.stat-card * {
+  text-decoration: none !important;
+}
+
+.stat-card__label {
+  color: #64748b !important;
+  font-size: 0.725rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  display: block !important;
+  line-height: 1.4 !important;
+}
+
+.stat-card__value {
+  color: #0f172a !important;
+  font-size: 1.75rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.03em !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  margin-top: 0.5rem !important;
+  display: block !important;
+}
+
+/* ==========================================================================
+   6. DATA TABLES & TIMELINES RESET
+   ========================================================================== */
+.table-responsive {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  background-color: #ffffff !important;
+}
+
+.table-premium {
+  margin-bottom: 0 !important;
+  font-size: 0.8125rem !important;
+}
+
+.table-premium th {
+  background-color: #f8fafc !important;
+  color: #475569 !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  font-size: 0.6875rem !important;
+  letter-spacing: 0.05em !important;
+  padding: 0.75rem 1rem !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.table-premium td {
+  padding: 0.875rem 1rem !important;
+  vertical-align: middle !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  color: #334155 !important;
+}
+
+.table-premium tr:last-child td {
+  border-bottom: none !important;
+}
+
+.table-premium tr:hover td {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+.badge-premium {
+  font-size: 0.6875rem !important;
+  font-weight: 600 !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 4px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.02em !important;
+}
+
+.badge-premium-sync {
+  background-color: #e2f5ea !important;
+  color: #047857 !important;
+}
+
+.activity-node {
+  border-left: 1px solid #e2e8f0 !important;
+  padding-left: 1.25rem !important;
+  position: relative !important;
+  padding-bottom: 1.25rem !important;
+}
+
+.activity-node::before {
+  content: '' !important;
+  position: absolute !important;
+  left: -3.5px !important;
+  top: 4px !important;
+  width: 7px !important;
+  height: 7px !important;
+  background-color: #cbd5e1 !important;
+  border-radius: 50% !important;
+}
+
+.activity-node.active::before {
+  background-color: #059669 !important;
+}
+/* ==========================================================================
+   7. PREMIUM AUTHENTICATION ENGINE (SPLIT-SCREEN INTERFACE)
+   ========================================================================== */
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  background-color: #f8fafc;
+}
+
+/* Brand Display Column */
+.auth-brand-side {
+  flex: 1;
+  background-color: #0f172a;
+  border-right: 1px solid #1e293b;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3.5rem;
+  overflow: hidden;
+}
+
+/* Abstract Financial Geometric Wireframe Grid */
+.auth-grid-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image: 
+    linear-gradient(#ffffff 1px, transparent 1px),
+    linear-gradient(90deg, #ffffff 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.auth-glow-orb {
+  position: absolute;
+  top: 20%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(5, 150, 105, 0.15) 0%, transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+/* Abstract Commercial Matrix Illustration Component */
+.auth-illustration-box {
+  position: relative;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 2.5rem;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  margin-top: 2rem;
+}
+
+.metric-strip {
+  height: 4px;
+  background: #1e293b;
+  border-radius: 2px;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+}
+
+.metric-strip-fill {
+  height: 100%;
+  background: #059669;
+  width: 65%;
+}
+
+/* Transaction Form Column */
+.auth-form-side {
+  width: 540px;
+  flex-shrink: 0;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4rem 4.5rem;
+  position: relative;
+}
+
+.auth-card-shell {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+/* Validation Feedback Overrides */
+.auth-input-group {
+  position: relative;
+}
+
+.auth-input-group .form-control {
+  padding-right: 2.5rem !important;
+}
+
+.feedback-icon-status {
+  position: absolute;
+  right: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* Responsiveness Architecture */
+@media (max-width: 1024px) {
+  .auth-form-side {
+    width: 480px;
+    padding: 3rem;
+  }
+}
+
+@media (max-width: 840px) {
+  .auth-brand-side {
+    display: none !important;
+  }
+  .auth-form-side {
+    width: 100%;
+    padding: 2rem;
+  }
 }

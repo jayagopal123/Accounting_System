@@ -1,94 +1,47 @@
-.app-shell {
-  min-height: 100vh;
-  background: #f4f6f9;
-}
-
+/* Structural Sidebar Shell */
 .sidebar-shell {
-  min-height: 100vh;
-  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  height: 100vh;
+  background-color: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  width: 260px; /* Enforced solid width to prevent content squeezing */
 }
 
 .sidebar-link {
-  color: #cbd5e1;
-  border-radius: 0.75rem;
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 4px;
   display: flex;
-  align-items: center;
+  align-items: center; /* Vertically aligns icon and text on the same line */
   gap: 0.75rem;
-  padding: 0.8rem 0.95rem;
+  padding: 0.625rem 0.875rem;
   text-decoration: none;
+  transition: all 0.1s ease;
+  white-space: nowrap; /* Forces text to stay on a single line */
 }
 
-.sidebar-link:hover,
+.sidebar-link:hover {
+  color: #0f172a;
+  background-color: #f1f5f9;
+}
+
 .sidebar-link.active {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.12);
+  color: #0f172a;
+  background-color: #f1f5f9;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 0 #059669;
 }
 
 .sidebar-section {
   color: #94a3b8;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  margin: 1.25rem 0 0.75rem;
+  margin: 1.5rem 0.875rem 0.5rem;
   text-transform: uppercase;
-}
-
-.content-shell {
-  min-height: 100vh;
-}
-
-.topbar {
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.page-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 1rem;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
-}
-
-.stat-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 1rem;
-  padding: 1.25rem;
-  height: 100%;
-}
-
-.stat-card__label {
-  color: #64748b;
-  font-size: 0.9rem;
-  margin-bottom: 0.4rem;
-}
-
-.stat-card__value {
-  color: #0f172a;
-  font-size: 1.85rem;
-  font-weight: 700;
-}
-
-.table-responsive {
-  border-radius: 0.9rem;
-}
-
-.form-section-title {
-  color: #0f172a;
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.cursor-pointer {
-  cursor: pointer;
-}
-
-@media (max-width: 991.98px) {
-  .sidebar-shell {
-    min-height: auto;
-  }
+  white-space: nowrap;
 }

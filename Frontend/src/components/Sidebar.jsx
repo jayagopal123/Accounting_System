@@ -24,18 +24,20 @@ function Sidebar() {
   let currentSection = "";
 
   return (
-    <aside className="sidebar-shell text-white p-3 p-lg-4">
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <div className="bg-primary rounded-3 p-2">
-          <FaBoxes size={20} />
+    <aside className="sidebar-shell">
+      {/* Brand Header */}
+      <div className="d-flex align-items-center gap-3 px-4 py-4 border-bottom border-secondary border-opacity-10">
+        <div className="bg-success bg-opacity-10 text-success rounded p-2 d-flex align-items-center justify-content-center">
+          <FaBoxes size={18} />
         </div>
         <div>
-          <div className="fw-bold">ERP System</div>
-          <div className="small text-white-50">Accounting Workspace</div>
+          <div className="fw-bold text-white small" style={{ letterSpacing: '0.03em' }}>Isaii Ledger</div>
+          <div className="text-muted" style={{ fontSize: '0.6875rem' }}>ERP Workspace</div>
         </div>
       </div>
 
-      <nav className="d-flex flex-column gap-1">
+      {/* Navigation Streams */}
+      <nav className="d-flex flex-column gap-1 p-3">
         {navItems.map(({ to, label, icon: Icon, section }) => {
           const sectionChanged = currentSection !== section;
           currentSection = section;
@@ -44,7 +46,7 @@ function Sidebar() {
             <div key={to}>
               {sectionChanged ? <div className="sidebar-section">{section}</div> : null}
               <NavLink to={to} className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
-                <Icon size={16} />
+                <Icon size={14} />
                 <span>{label}</span>
               </NavLink>
             </div>

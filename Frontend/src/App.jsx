@@ -17,10 +17,23 @@ import CreateSalesInvoicePage from "./pages/salesInvoices/CreateSalesInvoicePage
 import PurchaseInvoiceListPage from "./pages/purchaseInvoices/PurchaseInvoiceListPage";
 import CreatePurchaseInvoicePage from "./pages/purchaseInvoices/CreatePurchaseInvoicePage";
 
+// ==========================================================================
+// PREMIUM AUTHENTICATION PAGES IMPORTS
+// ==========================================================================
+import LoginPage from "./pages/auth/LoginPage";
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Authentication Routes SYSTEM */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+        {/* Core Ledger Workspace Routes */}
         <Route path="/" element={<Dashboard />} />
         <Route path="/accounts" element={<AccountListPage />} />
         <Route path="/accounts/new" element={<CreateAccountPage />} />
@@ -37,6 +50,8 @@ function App() {
         <Route path="/sales-invoices/new" element={<CreateSalesInvoicePage />} />
         <Route path="/purchase-invoices" element={<PurchaseInvoiceListPage />} />
         <Route path="/purchase-invoices/new" element={<CreatePurchaseInvoicePage />} />
+        
+        {/* Global Fallback Route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
