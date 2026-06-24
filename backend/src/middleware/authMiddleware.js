@@ -1,7 +1,7 @@
-const jwt = require('jsonwebtoken');
-const env = require('../config/env');
-const ApiError = require('../utils/ApiError');
-const UserRepository = require('../repositories/UserRepository');
+import jwt from "jsonwebtoken";
+import env from "../config/env.js";
+import ApiError from "../utils/ApiError.js";
+import UserRepository from "../repositories/UserRepository.js";
 
 const authMiddleware = async (req, res, next) => {
   try {
@@ -52,4 +52,4 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-module.exports = authMiddleware;
+export default authMiddleware;

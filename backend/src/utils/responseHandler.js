@@ -6,6 +6,4 @@ const sendSuccess = (res, message, data = {}, statusCode = 200) => {
   });
 };
 
-module.exports = {
-  sendSuccess
-};
+export { sendSuccess };

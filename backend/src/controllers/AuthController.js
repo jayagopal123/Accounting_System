@@ -1,8 +1,8 @@
-const AuthService = require('../services/AuthService');
-const { sendSuccess } = require('../utils/responseHandler');
-const catchAsync = require('../utils/catchAsync');
-const ApiError = require('../utils/ApiError');
-const env = require('../config/env');
+import AuthService from "../services/AuthService.js";
+import { sendSuccess } from "../utils/responseHandler.js";
+import catchAsync from "../utils/catchAsync.js";
+import ApiError from "../utils/ApiError.js";
+import env from "../config/env.js";
 
 class AuthController {
   constructor() {
@@ -58,4 +58,4 @@ class AuthController {
   });
 }
 
-module.exports = AuthController;
+export default AuthController;

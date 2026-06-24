@@ -1,4 +1,6 @@
-require('dotenv').config();
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const cleanEnv = {
   NODE_ENV: process.env.NODE_ENV || 'development',
@@ -13,4 +15,4 @@ if (cleanEnv.NODE_ENV === 'production' && (!process.env.JWT_SECRET || cleanEnv.J
   console.warn('WARNING: Running in production mode with a fallback or missing JWT_SECRET!');
 }
 
-module.exports = cleanEnv;
+export default cleanEnv;

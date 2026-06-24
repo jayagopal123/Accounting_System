@@ -1,8 +1,6 @@
-const express = require("express");
-
-const accountController = require("../controllers/AccountController");
-
-const authenticate = require("../middleware/authMiddleware");
+import express from "express";
+import accountController from "../controllers/AccountController.js";
+import authenticate from "../middleware/authMiddleware.js";
 
 
 
@@ -48,4 +46,4 @@ router.put(
   authenticate,
   accountController.updateAccount,
 );
-module.exports = router;
+export default router;

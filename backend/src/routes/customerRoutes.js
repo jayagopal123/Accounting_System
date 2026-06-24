@@ -2,11 +2,11 @@ import express from "express";
 
 import customerController from "../controllers/CustomerController.js";
 
-import authMiddleware from "../middlewares/authMiddleware.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
-import rbacMiddleware from "../middlewares/rbacMiddleware.js";
+import rbacMiddleware from "../middleware/rbacMiddleware.js";
 
-import validate from "../middlewares/validateMiddleware.js";
+import validate from "../middleware/validateMiddleware.js";
 
 import {
   createCustomerSchema,

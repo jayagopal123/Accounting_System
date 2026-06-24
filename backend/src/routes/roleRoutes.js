@@ -1,7 +1,7 @@
-const express = require("express");
-const RoleController = require("../controllers/RoleController");
-const authMiddleware = require("../middleware/authMiddleware");
-const rbacMiddleware = require("../middleware/rbacMiddleware");
+import express from "express";
+import RoleController from "../controllers/RoleController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
+import rbacMiddleware from "../middleware/rbacMiddleware.js";
 
 const router = express.Router();
 const roleController = new RoleController();
@@ -15,4 +15,4 @@ router.post(
   roleController.createRole,
 );
 
-module.exports = router;
+export default router;

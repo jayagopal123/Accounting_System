@@ -1,4 +1,4 @@
-const Account = require("../models/Account");
+import Account from "../models/Account.js";
 
 class AccountRepository {
   async create(accountData) {
@@ -73,4 +73,4 @@ class AccountRepository {
   }
 }
 
-module.exports = new AccountRepository();
+export default new AccountRepository();

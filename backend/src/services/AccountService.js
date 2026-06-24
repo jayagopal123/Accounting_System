@@ -1,5 +1,5 @@
-const ApiError = require("../utils/ApiError");
-const accountRepository = require("../repositories/AccountRepository");
+import ApiError from "../utils/ApiError.js";
+import accountRepository from "../repositories/AccountRepository.js";
 
 class AccountService {
   async createAccount(accountData, userId) {
@@ -194,4 +194,4 @@ class AccountService {
   }
 }
 
-module.exports = new AccountService();
+export default new AccountService();

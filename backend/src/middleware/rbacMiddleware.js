@@ -1,4 +1,4 @@
-const ApiError = require('../utils/ApiError');
+import ApiError from "../utils/ApiError.js";
 
 const rbacMiddleware = (requiredPermission) => {
   return (req, res, next) => {
@@ -23,4 +23,4 @@ const rbacMiddleware = (requiredPermission) => {
   };
 };
 
-module.exports = rbacMiddleware;
+export default rbacMiddleware;

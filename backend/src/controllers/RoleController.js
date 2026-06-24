@@ -1,7 +1,7 @@
-const RoleService = require('../services/RoleService');
-const { sendSuccess } = require('../utils/responseHandler');
-const catchAsync = require('../utils/catchAsync');
-const ApiError = require('../utils/ApiError');
+import RoleService from "../services/RoleService.js";
+import { sendSuccess } from "../utils/responseHandler.js";
+import catchAsync from "../utils/catchAsync.js";
+import ApiError from "../utils/ApiError.js";
 
 class RoleController {
   constructor() {
@@ -20,4 +20,4 @@ class RoleController {
   });
 }
 
-module.exports = RoleController;
+export default RoleController;

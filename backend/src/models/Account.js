@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const accountSchema = new mongoose.Schema(
   {
@@ -107,7 +107,7 @@ accountSchema.index({
   ancestors: 1
 });
 
-module.exports = mongoose.model(
+export default mongoose.model(
   "Account",
   accountSchema
 );

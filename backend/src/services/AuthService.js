@@ -1,8 +1,8 @@
-const jwt = require('jsonwebtoken');
-const env = require('../config/env');
-const ApiError = require('../utils/ApiError');
-const UserRepository = require('../repositories/UserRepository');
-const RoleRepository = require('../repositories/RoleRepository');
+import jwt from "jsonwebtoken";
+import env from "../config/env.js";
+import ApiError from "../utils/ApiError.js";
+import UserRepository from "../repositories/UserRepository.js";
+import RoleRepository from "../repositories/RoleRepository.js";
 
 class AuthService {
   constructor() {
@@ -101,4 +101,4 @@ class AuthService {
   }
 }
 
-module.exports = AuthService;
+export default AuthService;

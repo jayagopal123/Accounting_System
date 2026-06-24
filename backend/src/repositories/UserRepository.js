@@ -1,5 +1,5 @@
-const BaseRepository = require('./BaseRepository');
-const User = require('../models/User');
+import BaseRepository from "./BaseRepository.js";
+import User from "../models/User.js";
 
 class UserRepository extends BaseRepository {
   constructor() {
@@ -29,4 +29,4 @@ class UserRepository extends BaseRepository {
   }
 }
 
-module.exports = UserRepository;
+export default UserRepository;

@@ -1,5 +1,5 @@
-const BaseRepository = require('./BaseRepository');
-const Permission = require('../models/Permission');
+import BaseRepository from "./BaseRepository.js";
+import Permission from "../models/Permission.js";
 
 class PermissionRepository extends BaseRepository {
   constructor() {
@@ -17,4 +17,4 @@ class PermissionRepository extends BaseRepository {
   }
 }
 
-module.exports = PermissionRepository;
+export default PermissionRepository;

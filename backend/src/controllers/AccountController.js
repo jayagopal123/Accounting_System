@@ -1,5 +1,5 @@
-const accountService = require("../services/AccountService");
-const catchAsync = require("../utils/catchAsync");
+import accountService from "../services/AccountService.js";
+import catchAsync from "../utils/catchAsync.js";
 
 class AccountController {
   createAccount = catchAsync(async (req, res) => {
@@ -79,4 +79,4 @@ class AccountController {
   });
 }
 
-module.exports = new AccountController();
+export default new AccountController();

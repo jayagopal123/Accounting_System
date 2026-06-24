@@ -1,6 +1,7 @@
 {
   "name": "erp-accounting-system",
   "version": "1.0.0",
+  "type": "module",
   "description": "ERP Accounting System with Authentication and RBAC",
   "main": "src/server.js",
   "scripts": {
@@ -12,7 +13,8 @@
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "express": "^4.22.2",
+    "joi": "^18.2.3",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.4.1"
   },

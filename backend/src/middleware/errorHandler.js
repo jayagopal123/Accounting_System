@@ -1,4 +1,4 @@
-const env = require('../config/env');
+import env from "../config/env.js";
 
 const errorHandler = (err, req, res, next) => {
   let statusCode = err.statusCode || 500;
@@ -48,4 +48,4 @@ const errorHandler = (err, req, res, next) => {
   });
 };
 
-module.exports = errorHandler;
+export default errorHandler;

@@ -1,6 +1,6 @@
-const RoleRepository = require('../repositories/RoleRepository');
-const PermissionRepository = require('../repositories/PermissionRepository');
-const ApiError = require('../utils/ApiError');
+import RoleRepository from "../repositories/RoleRepository.js";
+import PermissionRepository from "../repositories/PermissionRepository.js";
+import ApiError from "../utils/ApiError.js";
 
 class RoleService {
   constructor() {
@@ -36,4 +36,4 @@ class RoleService {
   }
 }
 
-module.exports = RoleService;
+export default RoleService;

@@ -1,5 +1,5 @@
-const BaseRepository = require('./BaseRepository');
-const Role = require('../models/Role');
+import BaseRepository from "./BaseRepository.js";
+import Role from "../models/Role.js";
 
 class RoleRepository extends BaseRepository {
   constructor() {
@@ -16,4 +16,4 @@ class RoleRepository extends BaseRepository {
   }
 }
 
-module.exports = RoleRepository;
+export default RoleRepository;
