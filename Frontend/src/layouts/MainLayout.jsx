@@ -3,26 +3,16 @@ import Navbar from "../components/Navbar";
 
 function MainLayout({ children }) {
   return (
-    <div className="container-fluid">
-
-      <div className="row">
-
-        <div className="col-md-3 p-0">
+    <div className="container-fluid app-shell">
+      <div className="row g-0">
+        <div className="col-12 col-lg-3 col-xl-2">
           <Sidebar />
         </div>
-
-        <div className="col-md-9 p-0">
-
+        <div className="col-12 col-lg-9 col-xl-10 content-shell">
           <Navbar />
-
-          <div className="p-4">
-            {children}
-          </div>
-
+          <main className="p-3 p-md-4">{children}</main>
         </div>
-
       </div>
-
     </div>
   );
 }
