@@ -2,6 +2,7 @@ import MainLayout from "../../layouts/MainLayout";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { deleteAccount, getAccounts, updateStatus } from "../../services/accountApi";
+import { BsPencilSquare, BsToggleOff, BsToggleOn, BsTrash } from "react-icons/bs";
 
 function AccountListPage() {
   const [accounts, setAccounts] = useState([]);
@@ -71,7 +72,7 @@ function AccountListPage() {
             <input
               type="text"
               className="form-control"
-              placeholder="Search account..."
+              placeholder="Search by code or account name"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -103,9 +104,23 @@ function AccountListPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="6" className="text-center py-4">Loading accounts...</td></tr>
+                <tr>
+                  <td colSpan="6" className="text-center py-5">
+                    <div className="d-flex flex-column align-items-center gap-2">
+                      <div className="spinner-border text-primary" role="status" aria-hidden="true" />
+                      <span className="text-muted">Loading accounts...</span>
+                    </div>
+                  </td>
+                </tr>
               ) : filteredAccounts.length === 0 ? (
-                <tr><td colSpan="6" className="text-center py-4">No accounts found.</td></tr>
+                <tr>
+                  <td colSpan="6" className="text-center py-5">
+                    <div className="d-flex flex-column align-items-center gap-2">
+                      <div className="fs-4">No accounts found</div>
+                      <div className="text-muted">Try adjusting the search or create a new account.</div>
+                    </div>
+                  </td>
+                </tr>
               ) : (
                 filteredAccounts.map((account) => (
                   <tr key={account._id}>
@@ -114,22 +129,34 @@ function AccountListPage() {
                     <td>{account.accountType}</td>
                     <td>{account.currency}</td>
                     <td>
-                      <span className={`badge ${account.status === "ACTIVE" ? "bg-success" : "bg-secondary"}`}>
+                      <span className={`badge rounded-pill px-3 py-2 ${account.status === "ACTIVE" ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary"}`}>
                         {account.status}
                       </span>
                     </td>
                     <td className="text-end">
-                      <Link className="btn btn-sm btn-outline-warning me-2" to={`/accounts/${account._id}/edit`}>
-                        Edit
+                      <Link
+                        className="btn btn-sm btn-outline-warning rounded-circle me-2"
+                        to={`/accounts/${account._id}/edit`}
+                        aria-label={`Edit ${account.accountName}`}
+                        title="Edit"
+                      >
+                        <BsPencilSquare />
                       </Link>
                       <button
-                        className="btn btn-sm btn-outline-secondary me-2"
+                        className="btn btn-sm btn-outline-secondary rounded-circle me-2"
                         onClick={() => handleStatus(account._id, account.status === "ACTIVE" ? "INACTIVE" : "ACTIVE")}
+                        aria-label={account.status === "ACTIVE" ? `Deactivate ${account.accountName}` : `Activate ${account.accountName}`}
+                        title={account.status === "ACTIVE" ? "Deactivate" : "Activate"}
                       >
-                        {account.status === "ACTIVE" ? "Deactivate" : "Activate"}
+                        {account.status === "ACTIVE" ? <BsToggleOn /> : <BsToggleOff />}
                       </button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(account._id)}>
-                        Delete
+                      <button
+                        className="btn btn-sm btn-outline-danger rounded-circle"
+                        onClick={() => handleDelete(account._id)}
+                        aria-label={`Delete ${account.accountName}`}
+                        title="Delete"
+                      >
+                        <BsTrash />
                       </button>
                     </td>
                   </tr>

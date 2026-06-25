@@ -3,7 +3,11 @@ import catchAsync from "../utils/catchAsync.js";
 
 class AccountController {
   createAccount = catchAsync(async (req, res) => {
-    const account = await accountService.createAccount(req.body, req.user._id);
+    const account = await accountService.createAccount(
+      req.body,
+      req.user.companyId,
+      req.user._id,
+    );
 
     res.status(201).json({
       success: true,
@@ -68,6 +72,7 @@ class AccountController {
     const account = await accountService.updateAccount(
       req.params.id,
       req.body,
+      req.user.companyId,
       req.user._id,
     );
 

@@ -7,7 +7,6 @@ function CreateAccountPage() {
   const navigate = useNavigate();
   const [accounts, setAccounts] = useState([]);
   const [formData, setFormData] = useState({
-    companyId: "",
     accountCode: "",
     accountName: "",
     accountType: "ASSET",
@@ -38,15 +37,23 @@ function CreateAccountPage() {
     setFormData((current) => ({ ...current, [name]: type === "checkbox" ? checked : value }));
   };
 
+  const isParentSelected = Boolean(formData.parentAccount);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
       setSubmitting(true);
       setError("");
-      await createAccount({
+      const payload = {
         ...formData,
         parentAccount: formData.parentAccount || null,
-      });
+      };
+
+      if (payload.parentAccount) {
+        delete payload.accountType;
+      }
+
+      await createAccount(payload);
       navigate("/accounts");
     } catch (err) {
       setError(String(err));
@@ -66,10 +73,6 @@ function CreateAccountPage() {
         <form onSubmit={handleSubmit}>
           <div className="row g-3">
             <div className="col-md-6">
-              <label className="form-label">Company Id</label>
-              <input className="form-control" name="companyId" value={formData.companyId} onChange={handleChange} required />
-            </div>
-            <div className="col-md-6">
               <label className="form-label">Account Code</label>
               <input className="form-control" name="accountCode" value={formData.accountCode} onChange={handleChange} required />
             </div>
@@ -79,7 +82,13 @@ function CreateAccountPage() {
             </div>
             <div className="col-md-6">
               <label className="form-label">Account Type</label>
-              <select className="form-select" name="accountType" value={formData.accountType} onChange={handleChange}>
+              <select
+                className="form-select"
+                name="accountType"
+                value={formData.accountType}
+                onChange={handleChange}
+                disabled={isParentSelected}
+              >
                 <option value="ASSET">ASSET</option>
                 <option value="LIABILITY">LIABILITY</option>
                 <option value="EQUITY">EQUITY</option>
@@ -100,7 +109,13 @@ function CreateAccountPage() {
             </div>
             <div className="col-md-6">
               <label className="form-label">Currency</label>
-              <input className="form-control" name="currency" value={formData.currency} onChange={handleChange} />
+              <select className="form-select" name="currency" value={formData.currency} onChange={handleChange}>
+                <option value="INR">INR</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="AED">AED</option>
+                <option value="GBP">GBP</option>
+              </select>
             </div>
             <div className="col-12">
               <label className="form-label">Description</label>

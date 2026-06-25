@@ -2,9 +2,8 @@ import ApiError from "../utils/ApiError.js";
 import accountRepository from "../repositories/AccountRepository.js";
 
 class AccountService {
-  async createAccount(accountData, userId) {
+  async createAccount(accountData, companyId, userId) {
     const {
-      companyId,
       accountCode,
       accountName,
       accountType,
@@ -28,7 +27,10 @@ class AccountService {
     let resolvedAccountType = accountType;
 
     if (parentAccount) {
-      const parent = await accountRepository.findById(parentAccount);
+      const parent = await accountRepository.findByIdWithCompany(
+        parentAccount,
+        companyId,
+      );
 
       if (!parent) {
         throw new ApiError(404, "Parent account not found.");
@@ -57,7 +59,7 @@ class AccountService {
       ancestors: resolvedAncestors,
       level: resolvedLevel,
       isGroup: isGroup || false,
-      currency: currency || "USD",
+      currency: currency || "INR",
       description,
       createdBy: userId,
       updatedBy: userId,
@@ -100,8 +102,11 @@ class AccountService {
 
     return tree;
   }
-  async updateAccount(accountId, updateData, userId) {
-    const account = await accountRepository.findById(accountId);
+  async updateAccount(accountId, updateData, companyId, userId) {
+    const account = await accountRepository.findByIdWithCompany(
+      accountId,
+      companyId,
+    );
 
     if (!account) {
       throw new ApiError(404, "Account not found.");
@@ -117,9 +122,16 @@ class AccountService {
     let level = account.level;
     let ancestors = account.ancestors;
     let accountType = account.accountType;
+    const payload = {
+      ...updateData,
+      currency: updateData.currency || account.currency || "INR",
+    };
 
-    if (updateData.parentAccount) {
-      const parent = await accountRepository.findById(updateData.parentAccount);
+    if (payload.parentAccount) {
+      const parent = await accountRepository.findByIdWithCompany(
+        payload.parentAccount,
+        companyId,
+      );
 
       if (!parent) {
         throw new ApiError(404, "Parent account not found.");
@@ -133,7 +145,7 @@ class AccountService {
     }
 
     const updatedAccount = await accountRepository.update(accountId, {
-      ...updateData,
+      ...payload,
       level,
       ancestors,
       accountType,

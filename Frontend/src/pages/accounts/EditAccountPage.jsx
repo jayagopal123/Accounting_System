@@ -49,10 +49,21 @@ function EditAccountPage() {
     setFormData((current) => ({ ...current, [name]: type === "checkbox" ? checked : value }));
   };
 
+  const isParentSelected = Boolean(formData.parentAccount);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      await updateAccount(id, { ...formData, parentAccount: formData.parentAccount || null });
+      const payload = {
+        ...formData,
+        parentAccount: formData.parentAccount || null,
+      };
+
+      if (payload.parentAccount) {
+        delete payload.accountType;
+      }
+
+      await updateAccount(id, payload);
       navigate("/accounts");
     } catch (err) {
       setError(String(err));
@@ -82,7 +93,13 @@ function EditAccountPage() {
               </div>
               <div className="col-md-6">
                 <label className="form-label">Account Type</label>
-                <select className="form-select" name="accountType" value={formData.accountType} onChange={handleChange}>
+                <select
+                  className="form-select"
+                  name="accountType"
+                  value={formData.accountType}
+                  onChange={handleChange}
+                  disabled={isParentSelected}
+                >
                   <option value="ASSET">ASSET</option>
                   <option value="LIABILITY">LIABILITY</option>
                   <option value="EQUITY">EQUITY</option>
@@ -101,7 +118,13 @@ function EditAccountPage() {
               </div>
               <div className="col-md-6">
                 <label className="form-label">Currency</label>
-                <input className="form-control" name="currency" value={formData.currency} onChange={handleChange} />
+                <select className="form-select" name="currency" value={formData.currency} onChange={handleChange}>
+                  <option value="INR">INR</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="AED">AED</option>
+                  <option value="GBP">GBP</option>
+                </select>
               </div>
               <div className="col-12">
                 <label className="form-label">Description</label>
