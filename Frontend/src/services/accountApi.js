@@ -12,6 +12,10 @@ export const getAccountById = (id) => {
   return api.get(`/accounts/${id}`);
 };
 
+export const getNextAccountCode = () => {
+  return api.get("/accounts/next-code");
+};
+
 export const createAccount = (data) => {
   return api.post("/accounts", data);
 };

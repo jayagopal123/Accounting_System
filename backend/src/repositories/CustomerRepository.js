@@ -14,6 +14,25 @@ class CustomerRepository extends BaseRepository {
     return this.model.findOne({ "contacts.email": email });
   }
 
+  async findAll(filter = {}, page = 1, limit = 10) {
+    const query = { isDeleted: false, ...filter };
+    const skip = (page - 1) * limit;
+
+    const customers = await this.model
+      .find(query)
+      .skip(skip)
+      .limit(limit);
+
+    const total = await this.model.countDocuments(query);
+
+    return {
+      customers,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    };
+  }
+
   async search(search, page = 1, limit = 10) {
     const query = {
       $or: [

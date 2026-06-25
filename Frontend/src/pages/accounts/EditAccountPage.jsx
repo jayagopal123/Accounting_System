@@ -14,6 +14,7 @@ function EditAccountPage() {
     parentAccount: "",
     isGroup: false,
     currency: "INR",
+    amount: 0,
     description: "",
   });
   const [loading, setLoading] = useState(true);
@@ -27,14 +28,15 @@ function EditAccountPage() {
         const flatten = (items) => items.flatMap((item) => [item, ...(item.children ? flatten(item.children) : [])]);
         setAccounts(flatten(treeResponse.data.data).filter((item) => item._id !== id));
         setFormData({
-          accountCode: account.accountCode || "",
-          accountName: account.accountName || "",
-          accountType: account.accountType || "ASSET",
-          parentAccount: account.parentAccount || "",
-          isGroup: Boolean(account.isGroup),
-          currency: account.currency || "INR",
-          description: account.description || "",
-        });
+      accountCode: account.accountCode || "",
+      accountName: account.accountName || "",
+      accountType: account.accountType || "ASSET",
+      parentAccount: account.parentAccount || "",
+      isGroup: Boolean(account.isGroup),
+      currency: account.currency || "INR",
+      amount: account.amount || 0,
+      description: account.description || "",
+    });
       } catch (err) {
         setError(String(err));
       } finally {
@@ -83,9 +85,10 @@ function EditAccountPage() {
         ) : (
           <form onSubmit={handleSubmit}>
             <div className="row g-3">
+
               <div className="col-md-6">
                 <label className="form-label">Account Code</label>
-                <input className="form-control" name="accountCode" value={formData.accountCode} onChange={handleChange} required />
+                <input className="form-control" name="accountCode" value={formData.accountCode} disabled required />
               </div>
               <div className="col-md-6">
                 <label className="form-label">Account Name</label>
@@ -116,16 +119,27 @@ function EditAccountPage() {
                   ))}
                 </select>
               </div>
-              <div className="col-md-6">
-                <label className="form-label">Currency</label>
-                <select className="form-select" name="currency" value={formData.currency} onChange={handleChange}>
-                  <option value="INR">INR</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="AED">AED</option>
-                  <option value="GBP">GBP</option>
-                </select>
-              </div>
+              <div className="col-md-3">
+              <label className="form-label">Currency</label>
+              <select className="form-select" name="currency" value={formData.currency} onChange={handleChange}>
+                <option value="INR">INR</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="AED">AED</option>
+                <option value="GBP">GBP</option>
+              </select>
+            </div>
+            <div className="col-md-3">
+              <label className="form-label">Amount</label>
+              <input
+                type="number"
+                step="0.01"
+                className="form-control"
+                name="amount"
+                value={formData.amount || ""}
+                onChange={handleChange}
+              />
+            </div>
               <div className="col-12">
                 <label className="form-label">Description</label>
                 <textarea className="form-control" rows="3" name="description" value={formData.description} onChange={handleChange} />

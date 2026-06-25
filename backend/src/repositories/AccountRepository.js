@@ -9,11 +9,21 @@ class AccountRepository {
     return Account.findById(accountId);
   }
 
-  async findByCode(companyId, accountCode) {
+  async findByCode(accountCode) {
     return Account.findOne({
-      companyId,
       accountCode,
     });
+  }
+
+  async getNextAccountCode() {
+    const lastAccount = await Account.findOne()
+      .sort({ accountCode: -1 })
+      .lean();
+    if (!lastAccount) {
+      return "1000";
+    }
+    const lastCode = parseInt(lastAccount.accountCode, 10) || 0;
+    return (lastCode + 1).toString();
   }
 
   async update(accountId, updateData) {
@@ -42,18 +52,9 @@ class AccountRepository {
       ancestors: accountId,
     });
   }
-  async findAll(companyId) {
-    return Account.find({
-      companyId,
-    }).sort({
+  async findAll() {
+    return Account.find().sort({
       accountCode: 1,
-    });
-  }
-
-  async findByIdWithCompany(accountId, companyId) {
-    return Account.findOne({
-      _id: accountId,
-      companyId,
     });
   }
 
@@ -61,11 +62,8 @@ class AccountRepository {
     return Account.updateMany(filter, updateData);
   }
 
-  async getFlatTree(companyId) {
-    return Account.find({
-      companyId,
-      status: "ACTIVE",
-    })
+  async getFlatTree() {
+    return Account.find({ status: "ACTIVE" })
       .sort({
         accountCode: 1,
       })

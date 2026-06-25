@@ -2,34 +2,30 @@ import ApiError from "../utils/ApiError.js";
 import accountRepository from "../repositories/AccountRepository.js";
 
 class AccountService {
-  async createAccount(accountData, companyId, userId) {
+  async getNextAccountCode() {
+    return accountRepository.getNextAccountCode();
+  }
+
+  async createAccount(accountData, userId) {
     const {
-      accountCode,
       accountName,
       accountType,
       parentAccount,
       isGroup,
       currency,
+      amount,
       description,
     } = accountData;
 
-    const existingAccount = await accountRepository.findByCode(
-      companyId,
-      accountCode,
-    );
-
-    if (existingAccount) {
-      throw new ApiError(409, "Account code already exists.");
-    }
+    const accountCode = await accountRepository.getNextAccountCode();
 
     let resolvedLevel = 1;
     let resolvedAncestors = [];
     let resolvedAccountType = accountType;
 
     if (parentAccount) {
-      const parent = await accountRepository.findByIdWithCompany(
+      const parent = await accountRepository.findById(
         parentAccount,
-        companyId,
       );
 
       if (!parent) {
@@ -51,7 +47,6 @@ class AccountService {
     }
 
     return accountRepository.create({
-      companyId,
       accountCode,
       accountName,
       accountType: resolvedAccountType,
@@ -60,19 +55,17 @@ class AccountService {
       level: resolvedLevel,
       isGroup: isGroup || false,
       currency: currency || "INR",
+      amount: amount || 0,
       description,
       createdBy: userId,
       updatedBy: userId,
     });
   }
-  async getAccounts(companyId) {
-    return accountRepository.findAll(companyId);
+  async getAccounts() {
+    return accountRepository.findAll();
   }
-  async getAccountById(accountId, companyId) {
-    const account = await accountRepository.findByIdWithCompany(
-      accountId,
-      companyId,
-    );
+  async getAccountById(accountId) {
+    const account = await accountRepository.findById(accountId);
 
     if (!account) {
       throw new ApiError(404, "Account not found.");
@@ -81,8 +74,8 @@ class AccountService {
     return account;
   }
 
-  async getAccountTree(companyId) {
-    const accounts = await accountRepository.getFlatTree(companyId);
+  async getAccountTree() {
+    const accounts = await accountRepository.getFlatTree();
 
     const accountMap = {};
     const tree = [];
@@ -102,11 +95,8 @@ class AccountService {
 
     return tree;
   }
-  async updateAccount(accountId, updateData, companyId, userId) {
-    const account = await accountRepository.findByIdWithCompany(
-      accountId,
-      companyId,
-    );
+  async updateAccount(accountId, updateData, userId) {
+    const account = await accountRepository.findById(accountId);
 
     if (!account) {
       throw new ApiError(404, "Account not found.");
@@ -128,9 +118,8 @@ class AccountService {
     };
 
     if (payload.parentAccount) {
-      const parent = await accountRepository.findByIdWithCompany(
+      const parent = await accountRepository.findById(
         payload.parentAccount,
-        companyId,
       );
 
       if (!parent) {

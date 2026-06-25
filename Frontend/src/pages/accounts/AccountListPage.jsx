@@ -98,6 +98,7 @@ function AccountListPage() {
                 <th>Account Name</th>
                 <th>Type</th>
                 <th>Currency</th>
+                <th>Amount</th>
                 <th>Status</th>
                 <th className="text-end">Actions</th>
               </tr>
@@ -105,7 +106,7 @@ function AccountListPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-5">
+                  <td colSpan="7" className="text-center py-5">
                     <div className="d-flex flex-column align-items-center gap-2">
                       <div className="spinner-border text-primary" role="status" aria-hidden="true" />
                       <span className="text-muted">Loading accounts...</span>
@@ -114,7 +115,7 @@ function AccountListPage() {
                 </tr>
               ) : filteredAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-5">
+                  <td colSpan="7" className="text-center py-5">
                     <div className="d-flex flex-column align-items-center gap-2">
                       <div className="fs-4">No accounts found</div>
                       <div className="text-muted">Try adjusting the search or create a new account.</div>
@@ -128,6 +129,7 @@ function AccountListPage() {
                     <td>{account.accountName}</td>
                     <td>{account.accountType}</td>
                     <td>{account.currency}</td>
+                    <td>{account.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0.00"}</td>
                     <td>
                       <span className={`badge rounded-pill px-3 py-2 ${account.status === "ACTIVE" ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary"}`}>
                         {account.status}

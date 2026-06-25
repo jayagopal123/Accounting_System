@@ -2,13 +2,6 @@ import mongoose from "mongoose";
 
 const accountSchema = new mongoose.Schema(
   {
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
-      required: true,
-      index: true
-    },
-
     accountCode: {
       type: String,
       required: true,
@@ -61,6 +54,11 @@ const accountSchema = new mongoose.Schema(
       default: "USD"
     },
 
+    amount: {
+      type: Number,
+      default: 0
+    },
+
     status: {
       type: String,
       enum: ["ACTIVE", "INACTIVE"],
@@ -91,7 +89,6 @@ const accountSchema = new mongoose.Schema(
 
 accountSchema.index(
   {
-    companyId: 1,
     accountCode: 1
   },
   {

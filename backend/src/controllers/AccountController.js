@@ -2,10 +2,18 @@ import accountService from "../services/AccountService.js";
 import catchAsync from "../utils/catchAsync.js";
 
 class AccountController {
+  getNextAccountCode = catchAsync(async (req, res) => {
+    const accountCode = await accountService.getNextAccountCode();
+
+    res.status(200).json({
+      success: true,
+      data: { accountCode },
+    });
+  });
+
   createAccount = catchAsync(async (req, res) => {
     const account = await accountService.createAccount(
       req.body,
-      req.user.companyId,
       req.user._id,
     );
 
@@ -17,7 +25,7 @@ class AccountController {
   });
 
   getAccountTree = catchAsync(async (req, res) => {
-    const tree = await accountService.getAccountTree(req.user.companyId);
+    const tree = await accountService.getAccountTree();
 
     res.status(200).json({
       success: true,
@@ -48,7 +56,7 @@ class AccountController {
     });
   });
   getAccounts = catchAsync(async (req, res) => {
-    const accounts = await accountService.getAccounts(req.user.companyId);
+    const accounts = await accountService.getAccounts();
 
     res.status(200).json({
       success: true,
@@ -59,7 +67,6 @@ class AccountController {
   getAccountById = catchAsync(async (req, res) => {
     const account = await accountService.getAccountById(
       req.params.id,
-      req.user.companyId,
     );
 
     res.status(200).json({
@@ -72,7 +79,6 @@ class AccountController {
     const account = await accountService.updateAccount(
       req.params.id,
       req.body,
-      req.user.companyId,
       req.user._id,
     );
 

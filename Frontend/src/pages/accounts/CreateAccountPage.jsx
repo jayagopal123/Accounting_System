@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
-import { createAccount, getAccountTree } from "../../services/accountApi";
+import { createAccount, getAccountTree, getNextAccountCode } from "../../services/accountApi";
 
 function CreateAccountPage() {
   const navigate = useNavigate();
@@ -13,23 +13,32 @@ function CreateAccountPage() {
     parentAccount: "",
     isGroup: false,
     currency: "INR",
+    amount: 0,
     description: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadTree = async () => {
+    const loadData = async () => {
       try {
-        const response = await getAccountTree();
+        const [treeResponse, codeResponse] = await Promise.all([
+          getAccountTree(),
+          getNextAccountCode(),
+        ]);
         const flatten = (items) =>
           items.flatMap((item) => [item, ...(item.children ? flatten(item.children) : [])]);
-        setAccounts(flatten(response.data.data));
-      } catch {
+        setAccounts(flatten(treeResponse.data.data));
+        setFormData((prev) => ({
+          ...prev,
+          accountCode: codeResponse.data.data.accountCode,
+        }));
+      } catch (err) {
         setAccounts([]);
+        setError(err?.message || "Failed to load data");
       }
     };
-    loadTree();
+    loadData();
   }, []);
 
   const handleChange = (event) => {
@@ -74,7 +83,7 @@ function CreateAccountPage() {
           <div className="row g-3">
             <div className="col-md-6">
               <label className="form-label">Account Code</label>
-              <input className="form-control" name="accountCode" value={formData.accountCode} onChange={handleChange} required />
+              <input className="form-control" name="accountCode" value={formData.accountCode} disabled required />
             </div>
             <div className="col-md-6">
               <label className="form-label">Account Name</label>
@@ -107,7 +116,7 @@ function CreateAccountPage() {
                 ))}
               </select>
             </div>
-            <div className="col-md-6">
+            <div className="col-md-3">
               <label className="form-label">Currency</label>
               <select className="form-select" name="currency" value={formData.currency} onChange={handleChange}>
                 <option value="INR">INR</option>
@@ -116,6 +125,17 @@ function CreateAccountPage() {
                 <option value="AED">AED</option>
                 <option value="GBP">GBP</option>
               </select>
+            </div>
+            <div className="col-md-3">
+              <label className="form-label">Amount</label>
+              <input
+                type="number"
+                step="0.01"
+                className="form-control"
+                name="amount"
+                value={formData.amount || ""}
+                onChange={handleChange}
+              />
             </div>
             <div className="col-12">
               <label className="form-label">Description</label>

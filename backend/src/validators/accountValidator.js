@@ -1,12 +1,6 @@
 const Joi = require("joi");
 
 const createAccountSchema = Joi.object({
-  companyId: Joi.string().required(),
-
-  accountCode: Joi.string()
-    .trim()
-    .required(),
-
   accountName: Joi.string()
     .trim()
     .required(),
