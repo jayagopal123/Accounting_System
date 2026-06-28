@@ -2,19 +2,24 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import { cancelSalesInvoice, getSalesInvoices, submitSalesInvoice } from "../../services/salesInvoiceApi";
+import { BsFileText, BsCheckLg, BsXLg } from "react-icons/bs";
 
 function SalesInvoiceListPage() {
   const [invoices, setInvoices] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const loadInvoices = async () => {
     try {
+      setLoading(true);
       const response = await getSalesInvoices();
       setInvoices(response.data.data);
       setError("");
     } catch (err) {
       setError(String(err));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,8 +45,13 @@ function SalesInvoiceListPage() {
     <MainLayout>
       <div className="page-card p-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2>Sales Invoices</h2>
-          <Link className="btn btn-primary" to="/sales-invoices/new">+ New Sales Invoice</Link>
+          <div>
+            <h5 className="page-header-title mb-1">Sales Invoices</h5>
+            <p className="page-header-subtitle">Manage customer sales transactions</p>
+          </div>
+          <Link className="btn btn-primary d-flex align-items-center gap-2" to="/sales-invoices/new">
+            <span>+</span> New Invoice
+          </Link>
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
         <div className="row g-3 mb-3">
@@ -55,30 +65,53 @@ function SalesInvoiceListPage() {
           </div>
         </div>
         <div className="table-responsive">
-          <table className="table table-hover align-middle">
-            <thead className="table-light">
+          <table className="table table-premium align-middle">
+            <thead>
               <tr>
                 <th>Invoice</th>
                 <th>Date</th>
                 <th>Customer</th>
-                <th>Grand Total</th>
+                <th className="text-end">Grand Total</th>
                 <th>Status</th>
                 <th className="text-end">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredInvoices.length === 0 ? (
-                <tr><td colSpan="6" className="text-center py-4">No sales invoices found.</td></tr>
+              {loading ? (
+                <tr><td colSpan="6" className="text-center py-5">
+                  <div className="d-flex flex-column align-items-center gap-2">
+                    <div className="spinner-border text-secondary" role="status" style={{ width: "1.25rem", height: "1.25rem" }} />
+                    <span className="text-muted small">Loading invoices...</span>
+                  </div>
+                </td></tr>
+              ) : filteredInvoices.length === 0 ? (
+                <tr><td colSpan="6" className="text-center py-5">
+                  <div className="d-flex flex-column align-items-center gap-2">
+                    <div className="empty-state-icon"><BsFileText size={18} /></div>
+                    <div className="fw-semibold text-dark" style={{ fontSize: "0.875rem" }}>No sales invoices found</div>
+                    <div className="text-muted small">Create a new sales invoice to get started.</div>
+                  </div>
+                </td></tr>
               ) : filteredInvoices.map((invoice) => (
                 <tr key={invoice._id}>
-                  <td>{invoice.invoiceNumber}</td>
-                  <td>{new Date(invoice.invoiceDate).toLocaleDateString()}</td>
-                  <td>{invoice.customer?.customerName || invoice.customer}</td>
-                  <td>{invoice.grandTotal}</td>
-                  <td><span className="badge bg-info">{invoice.status}</span></td>
+                  <td className="fw-semibold font-mono">{invoice.invoiceNumber}</td>
+                  <td className="text-muted">{new Date(invoice.invoiceDate).toLocaleDateString()}</td>
+                  <td className="fw-medium">{invoice.customer?.customerName || invoice.customer}</td>
+                  <td className="font-mono fw-semibold text-end">{Number(invoice.grandTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  <td><span className={`badge-premium ${invoice.status === "Draft" ? "badge-premium-draft" : invoice.status === "Submitted" ? "badge-premium-submitted" : "badge-premium-cancelled"}`}>{invoice.status}</span></td>
                   <td className="text-end">
-                    {invoice.status === "Draft" ? <button className="btn btn-sm btn-outline-success me-2" onClick={() => handleAction(() => submitSalesInvoice(invoice._id))}>Submit</button> : null}
-                    {invoice.status !== "Cancelled" ? <button className="btn btn-sm btn-outline-danger" onClick={() => handleAction(() => cancelSalesInvoice(invoice._id))}>Cancel</button> : null}
+                    <div className="d-flex gap-1 justify-content-end">
+                      {invoice.status === "Draft" ? (
+                        <button className="btn btn-sm btn-outline-success" onClick={() => handleAction(() => submitSalesInvoice(invoice._id))} title="Submit">
+                          <BsCheckLg size={13} />
+                        </button>
+                      ) : null}
+                      {invoice.status !== "Cancelled" ? (
+                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleAction(() => cancelSalesInvoice(invoice._id))} title="Cancel">
+                          <BsXLg size={13} />
+                        </button>
+                      ) : null}
+                    </div>
                   </td>
                 </tr>
               ))}

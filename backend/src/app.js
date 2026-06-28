@@ -10,6 +10,7 @@ import supplierRoutes from "./routes/supplierRoutes.js";
 import journalEntryRoutes from "./routes/journalEntryRoutes.js";
 import salesInvoiceRoutes from "./routes/salesInvoiceRoutes.js";
 import purchaseInvoiceRoutes from "./routes/purchaseInvoiceRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
 
 import errorHandler from "./middleware/errorHandler.js";
 import ApiError from "./utils/ApiError.js";
@@ -28,6 +29,7 @@ app.use("/api/suppliers", supplierRoutes);
 app.use("/api/journal-entries", journalEntryRoutes);
 app.use("/api/sales-invoices", salesInvoiceRoutes);
 app.use("/api/purchase-invoices", purchaseInvoiceRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.use("*", (req, res, next) => {
   next(

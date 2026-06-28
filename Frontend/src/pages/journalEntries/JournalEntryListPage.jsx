@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import { cancelJournalEntry, getJournalEntries, submitJournalEntry } from "../../services/journalEntryApi";
+import { BsFileText, BsCheckLg, BsXLg } from "react-icons/bs";
 
 function JournalEntryListPage() {
   const [entries, setEntries] = useState([]);
@@ -44,8 +45,13 @@ function JournalEntryListPage() {
     <MainLayout>
       <div className="page-card p-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2>Journal Entries</h2>
-          <Link className="btn btn-primary" to="/journal-entries/new">+ New Journal Entry</Link>
+          <div>
+            <h5 className="page-header-title mb-1">Journal Entries</h5>
+            <p className="page-header-subtitle">Record and manage general journal vouchers</p>
+          </div>
+          <Link className="btn btn-primary d-flex align-items-center gap-2" to="/journal-entries/new">
+            <span>+</span> New Entry
+          </Link>
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
         <div className="row g-3 mb-3">
@@ -59,38 +65,55 @@ function JournalEntryListPage() {
           </div>
         </div>
         <div className="table-responsive">
-          <table className="table table-hover align-middle">
-            <thead className="table-light">
+          <table className="table table-premium align-middle">
+            <thead>
               <tr>
                 <th>Voucher</th>
                 <th>Date</th>
                 <th>Remarks</th>
-                <th>Total Debit</th>
-                <th>Total Credit</th>
+                <th className="text-end">Total Debit</th>
+                <th className="text-end">Total Credit</th>
                 <th>Status</th>
                 <th className="text-end">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="7" className="text-center py-4">Loading journal entries...</td></tr>
+                <tr><td colSpan="7" className="text-center py-5">
+                  <div className="d-flex flex-column align-items-center gap-2">
+                    <div className="spinner-border text-secondary" role="status" style={{ width: "1.25rem", height: "1.25rem" }} />
+                    <span className="text-muted small">Loading journal entries...</span>
+                  </div>
+                </td></tr>
               ) : filteredEntries.length === 0 ? (
-                <tr><td colSpan="7" className="text-center py-4">No journal entries found.</td></tr>
+                <tr><td colSpan="7" className="text-center py-5">
+                  <div className="d-flex flex-column align-items-center gap-2">
+                    <div className="empty-state-icon"><BsFileText size={18} /></div>
+                    <div className="fw-semibold text-dark" style={{ fontSize: "0.875rem" }}>No journal entries found</div>
+                    <div className="text-muted small">Create a new journal entry to get started.</div>
+                  </div>
+                </td></tr>
               ) : filteredEntries.map((entry) => (
                 <tr key={entry._id}>
-                  <td>{entry.voucherNumber}</td>
-                  <td>{new Date(entry.date).toLocaleDateString()}</td>
-                  <td>{entry.remarks || "-"}</td>
-                  <td>{entry.totalDebit}</td>
-                  <td>{entry.totalCredit}</td>
-                  <td><span className="badge bg-info">{entry.status}</span></td>
+                  <td className="fw-semibold font-mono">{entry.voucherNumber}</td>
+                  <td className="text-muted">{new Date(entry.date).toLocaleDateString()}</td>
+                  <td className="text-muted" style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.remarks || "—"}</td>
+                  <td className="font-mono fw-semibold text-end">{Number(entry.totalDebit).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  <td className="font-mono fw-semibold text-end">{Number(entry.totalCredit).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  <td><span className={`badge-premium ${entry.status === "Draft" ? "badge-premium-draft" : entry.status === "Submitted" ? "badge-premium-submitted" : "badge-premium-cancelled"}`}>{entry.status}</span></td>
                   <td className="text-end">
-                    {entry.status === "Draft" ? (
-                      <button className="btn btn-sm btn-outline-success me-2" onClick={() => handleAction(() => submitJournalEntry(entry._id))}>Submit</button>
-                    ) : null}
-                    {entry.status !== "Cancelled" ? (
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleAction(() => cancelJournalEntry(entry._id))}>Cancel</button>
-                    ) : null}
+                    <div className="d-flex gap-1 justify-content-end">
+                      {entry.status === "Draft" ? (
+                        <button className="btn btn-sm btn-outline-success" onClick={() => handleAction(() => submitJournalEntry(entry._id))} title="Submit">
+                          <BsCheckLg size={13} />
+                        </button>
+                      ) : null}
+                      {entry.status !== "Cancelled" ? (
+                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleAction(() => cancelJournalEntry(entry._id))} title="Cancel">
+                          <BsXLg size={13} />
+                        </button>
+                      ) : null}
+                    </div>
                   </td>
                 </tr>
               ))}

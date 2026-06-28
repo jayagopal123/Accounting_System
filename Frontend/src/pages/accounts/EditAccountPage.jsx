@@ -76,19 +76,25 @@ function EditAccountPage() {
     <MainLayout>
       <div className="page-card p-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2>Edit Account</h2>
-          <Link className="btn btn-outline-secondary" to="/accounts">Back</Link>
+          <div>
+            <h5 className="page-header-title mb-1">Edit Account</h5>
+            <p className="page-header-subtitle">Modify general ledger account details</p>
+          </div>
+          <Link className="btn btn-outline-secondary" to="/accounts">← Back</Link>
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
         {loading ? (
-          <div>Loading account...</div>
+          <div className="d-flex align-items-center gap-2 py-4">
+            <div className="spinner-border spinner-border-sm text-secondary" role="status" />
+            <span className="text-muted small">Loading account...</span>
+          </div>
         ) : (
           <form onSubmit={handleSubmit}>
-            <div className="row g-3">
-
+            <div className="form-section-title">Account Details</div>
+            <div className="row g-3 mb-4">
               <div className="col-md-6">
                 <label className="form-label">Account Code</label>
-                <input className="form-control" name="accountCode" value={formData.accountCode} disabled required />
+                <input className="form-control font-mono" name="accountCode" value={formData.accountCode} disabled required />
               </div>
               <div className="col-md-6">
                 <label className="form-label">Account Name</label>
@@ -103,55 +109,60 @@ function EditAccountPage() {
                   onChange={handleChange}
                   disabled={isParentSelected}
                 >
-                  <option value="ASSET">ASSET</option>
-                  <option value="LIABILITY">LIABILITY</option>
-                  <option value="EQUITY">EQUITY</option>
-                  <option value="INCOME">INCOME</option>
-                  <option value="EXPENSE">EXPENSE</option>
+                  <option value="ASSET">Asset</option>
+                  <option value="LIABILITY">Liability</option>
+                  <option value="EQUITY">Equity</option>
+                  <option value="INCOME">Income</option>
+                  <option value="EXPENSE">Expense</option>
                 </select>
               </div>
               <div className="col-md-6">
                 <label className="form-label">Parent Account</label>
                 <select className="form-select" name="parentAccount" value={formData.parentAccount} onChange={handleChange}>
-                  <option value="">None</option>
+                  <option value="">None (Top Level)</option>
                   {accounts.map((account) => (
                     <option key={account._id} value={account._id}>{account.accountCode} - {account.accountName}</option>
                   ))}
                 </select>
               </div>
+            </div>
+
+            <div className="form-section-title">Financial Settings</div>
+            <div className="row g-3 mb-4">
               <div className="col-md-3">
-              <label className="form-label">Currency</label>
-              <select className="form-select" name="currency" value={formData.currency} onChange={handleChange}>
-                <option value="INR">INR</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="AED">AED</option>
-                <option value="GBP">GBP</option>
-              </select>
-            </div>
-            <div className="col-md-3">
-              <label className="form-label">Amount</label>
-              <input
-                type="number"
-                step="0.01"
-                className="form-control"
-                name="amount"
-                value={formData.amount || ""}
-                onChange={handleChange}
-              />
-            </div>
-              <div className="col-12">
+                <label className="form-label">Currency</label>
+                <select className="form-select" name="currency" value={formData.currency} onChange={handleChange}>
+                  <option value="INR">INR (₹)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="AED">AED (د.إ)</option>
+                  <option value="GBP">GBP (£)</option>
+                </select>
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">Amount</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="form-control"
+                  name="amount"
+                  value={formData.amount || ""}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-md-6">
                 <label className="form-label">Description</label>
-                <textarea className="form-control" rows="3" name="description" value={formData.description} onChange={handleChange} />
+                <textarea className="form-control" rows="2" name="description" value={formData.description} onChange={handleChange} />
               </div>
               <div className="col-12">
                 <div className="form-check">
-                  <input className="form-check-input" type="checkbox" name="isGroup" checked={formData.isGroup} onChange={handleChange} />
-                  <label className="form-check-label">Group Account</label>
+                  <input className="form-check-input" type="checkbox" name="isGroup" checked={formData.isGroup} onChange={handleChange} id="isGroup" />
+                  <label className="form-check-label" htmlFor="isGroup">Group Account (can have sub-accounts)</label>
                 </div>
               </div>
             </div>
-            <div className="mt-4 d-flex gap-2">
+
+            <div className="d-flex gap-2 pt-3 border-top">
               <button className="btn btn-primary">Update Account</button>
               <Link className="btn btn-outline-secondary" to="/accounts">Cancel</Link>
             </div>

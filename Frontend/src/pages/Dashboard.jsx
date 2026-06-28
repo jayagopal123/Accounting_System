@@ -1,10 +1,7 @@
 import MainLayout from "../layouts/MainLayout";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getAccounts } from "../services/accountApi";
-import { getCustomers } from "../services/customerApi";
-import { getSuppliers } from "../services/supplierApi";
-import { getJournalEntries } from "../services/journalEntryApi";
+import { getDashboardSummary } from "../services/dashboardApi";
 import { FaArrowUp, FaCalendarAlt, FaSlidersH } from "react-icons/fa";
 
 const cards = [
@@ -22,25 +19,22 @@ function Dashboard() {
     journalEntries: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const [accountsResponse, customersResponse, suppliersResponse, journalResponse] =
-          await Promise.all([
-            getAccounts(),
-            getCustomers(),
-            getSuppliers(),
-            getJournalEntries(),
-          ]);
-
+        const response = await getDashboardSummary();
+        const data = response.data.data;
         setStats({
-          accounts: accountsResponse.data.data.length,
-          customers: customersResponse.data.data.total ?? customersResponse.data.data.customers?.length ?? 0,
-          suppliers: suppliersResponse.data.data.total ?? suppliersResponse.data.data.suppliers?.length ?? 0,
-          journalEntries: journalResponse.data.data.length,
+          accounts: data.totalActiveLedgerAccounts,
+          customers: data.totalActiveReceivableAccounts,
+          suppliers: data.totalActivePayableAccounts,
+          journalEntries: data.totalUnpostedJournalEntries,
         });
-      } catch {
+        setError(null);
+      } catch (err) {
+        setError(err || "Failed to load dashboard summary.");
         setStats({ accounts: 0, customers: 0, suppliers: 0, journalEntries: 0 });
       } finally {
         setLoading(false);
@@ -69,6 +63,8 @@ function Dashboard() {
           </button>
         </div>
       </div>
+
+      {error ? <div className="alert alert-danger py-2 mb-4" style={{ fontSize: "0.8rem" }}>{error}</div> : null}
 
       {/* Metrics Layout Grid */}
       <div className="row g-3 mb-4">

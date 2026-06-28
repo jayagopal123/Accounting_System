@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import { activateSupplier, blockSupplier, deleteSupplier, getSuppliers } from "../../services/supplierApi";
+import { BsPeople, BsPencilSquare, BsTrash, BsToggleOn, BsToggleOff } from "react-icons/bs";
 
 function SupplierListPage() {
   const [suppliers, setSuppliers] = useState([]);
@@ -43,18 +44,23 @@ function SupplierListPage() {
     <MainLayout>
       <div className="page-card p-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2>Suppliers</h2>
-          <Link className="btn btn-primary" to="/suppliers/new">+ New Supplier</Link>
+          <div>
+            <h5 className="page-header-title mb-1">Suppliers</h5>
+            <p className="page-header-subtitle">Manage supplier master records</p>
+          </div>
+          <Link className="btn btn-primary d-flex align-items-center gap-2" to="/suppliers/new">
+            <span>+</span> New Supplier
+          </Link>
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
         <div className="row g-3 mb-3">
           <div className="col-md-6">
-            <input className="form-control" placeholder="Search suppliers" value={search} onChange={(event) => setSearch(event.target.value)} />
+            <input className="form-control" placeholder="Search suppliers by name or code..." value={search} onChange={(event) => setSearch(event.target.value)} />
           </div>
         </div>
         <div className="table-responsive">
-          <table className="table table-hover align-middle">
-            <thead className="table-light">
+          <table className="table table-premium align-middle">
+            <thead>
               <tr>
                 <th>Code</th>
                 <th>Name</th>
@@ -66,32 +72,49 @@ function SupplierListPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="6" className="text-center py-4">Loading suppliers...</td></tr>
+                <tr><td colSpan="6" className="text-center py-5">
+                  <div className="d-flex flex-column align-items-center gap-2">
+                    <div className="spinner-border text-secondary" role="status" style={{ width: "1.25rem", height: "1.25rem" }} />
+                    <span className="text-muted small">Loading suppliers...</span>
+                  </div>
+                </td></tr>
               ) : suppliers.length === 0 ? (
-                <tr><td colSpan="6" className="text-center py-4">No suppliers found.</td></tr>
+                <tr><td colSpan="6" className="text-center py-5">
+                  <div className="d-flex flex-column align-items-center gap-2">
+                    <div className="empty-state-icon"><BsPeople size={18} /></div>
+                    <div className="fw-semibold text-dark" style={{ fontSize: "0.875rem" }}>No suppliers found</div>
+                    <div className="text-muted small">Try adjusting the search or add a new supplier.</div>
+                  </div>
+                </td></tr>
               ) : suppliers.map((supplier) => (
                 <tr key={supplier._id}>
-                  <td>{supplier.supplierCode}</td>
-                  <td>{supplier.supplierName}</td>
-                  <td>{supplier.company || "-"}</td>
-                  <td>{supplier.defaultCurrency}</td>
-                  <td><span className="badge bg-info">{supplier.status}</span></td>
+                  <td className="fw-semibold font-mono">{supplier.supplierCode}</td>
+                  <td className="fw-medium">{supplier.supplierName}</td>
+                  <td className="text-muted">{supplier.company || "—"}</td>
+                  <td className="font-mono">{supplier.defaultCurrency}</td>
+                  <td><span className={`badge-premium ${supplier.status === "Active" ? "badge-premium-active" : "badge-premium-blocked"}`}>{supplier.status}</span></td>
                   <td className="text-end">
-                    <Link className="btn btn-sm btn-outline-warning me-2" to={`/suppliers/${supplier._id}/edit`}>Edit</Link>
-                    <button className="btn btn-sm btn-outline-secondary me-2" onClick={() => handleAction(() => supplier.status === "Blocked" ? activateSupplier(supplier._id) : blockSupplier(supplier._id))}>
-                      {supplier.status === "Blocked" ? "Activate" : "Block"}
-                    </button>
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => window.confirm("Delete this supplier?") && handleAction(() => deleteSupplier(supplier._id))}>Delete</button>
+                    <div className="d-flex gap-1 justify-content-end">
+                      <Link className="btn btn-sm btn-outline-secondary" to={`/suppliers/${supplier._id}/edit`} title="Edit">
+                        <BsPencilSquare size={13} />
+                      </Link>
+                      <button className="btn btn-sm btn-outline-secondary" onClick={() => handleAction(() => supplier.status === "Blocked" ? activateSupplier(supplier._id) : blockSupplier(supplier._id))} title={supplier.status === "Blocked" ? "Activate" : "Block"}>
+                        {supplier.status === "Blocked" ? <BsToggleOff size={13} /> : <BsToggleOn size={13} />}
+                      </button>
+                      <button className="btn btn-sm btn-outline-danger" onClick={() => window.confirm("Delete this supplier?") && handleAction(() => deleteSupplier(supplier._id))} title="Delete">
+                        <BsTrash size={13} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className="d-flex justify-content-between align-items-center mt-3">
-          <button className="btn btn-outline-secondary" disabled={page <= 1} onClick={() => loadSuppliers(page - 1, search)}>Previous</button>
-          <span className="text-muted">Page {page} of {totalPages}</span>
-          <button className="btn btn-outline-secondary" disabled={page >= totalPages} onClick={() => loadSuppliers(page + 1, search)}>Next</button>
+        <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+          <button className="btn btn-sm btn-outline-secondary" disabled={page <= 1} onClick={() => loadSuppliers(page - 1, search)}>Previous</button>
+          <span className="text-muted small font-mono">Page {page} of {totalPages}</span>
+          <button className="btn btn-sm btn-outline-secondary" disabled={page >= totalPages} onClick={() => loadSuppliers(page + 1, search)}>Next</button>
         </div>
       </div>
     </MainLayout>

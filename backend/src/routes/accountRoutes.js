@@ -34,7 +34,11 @@ router.get(
   authenticate,
   accountController.getAccounts,
 );
-
+router.get(
+  "/next-code",
+  authenticate,
+  accountController.getNextAccountCode,
+);
 router.get(
   "/:id",
   authenticate,

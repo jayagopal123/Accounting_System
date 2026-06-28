@@ -199,7 +199,49 @@ a {
 }
 
 /* ==========================================================================
-   5. SOLID DATA METRIC CARDS & WORKSPACE
+   5. FORM SECTION DIVIDERS & PAGE HEADERS
+   ========================================================================== */
+.form-section-title {
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: #64748b !important;
+  padding-bottom: 0.5rem !important;
+  margin-bottom: 1rem !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.page-header-title {
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  letter-spacing: -0.02em !important;
+}
+
+.page-header-subtitle {
+  font-size: 0.75rem !important;
+  color: #64748b !important;
+  margin-bottom: 0 !important;
+}
+
+.empty-state-icon {
+  width: 48px;
+  height: 48px;
+  background-color: #f1f5f9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.empty-state-icon svg {
+  color: #94a3b8;
+}
+
+/* ==========================================================================
+   6. SOLID DATA METRIC CARDS & WORKSPACE
    ========================================================================== */
 .page-card {
   background-color: #ffffff !important;
@@ -308,11 +350,66 @@ a.stat-card * {
   color: #047857 !important;
 }
 
+.badge-premium-active {
+  background-color: #e2f5ea !important;
+  color: #047857 !important;
+}
+
+.badge-premium-draft {
+  background-color: #fef9c3 !important;
+  color: #854d0e !important;
+}
+
+.badge-premium-submitted {
+  background-color: #dbeafe !important;
+  color: #1e40af !important;
+}
+
+.badge-premium-cancelled {
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
+.badge-premium-blocked {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+}
+
 .activity-node {
   border-left: 1px solid #e2e8f0 !important;
   padding-left: 1.25rem !important;
   position: relative !important;
   padding-bottom: 1.25rem !important;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+}
+
+.summary-row .summary-label {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.summary-row .summary-value {
+  font-weight: 600;
+  color: #0f172a;
+  font-size: 0.875rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.summary-row.total {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.summary-row.total .summary-value {
+  font-size: 1rem;
+  color: #059669;
 }
 
 .activity-node::before {

@@ -44,32 +44,64 @@ function CreatePurchaseInvoicePage() {
     <MainLayout>
       <div className="page-card p-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2>Create Purchase Invoice</h2>
-          <Link className="btn btn-outline-secondary" to="/purchase-invoices">Back</Link>
+          <div>
+            <h5 className="page-header-title mb-1">Create Purchase Invoice</h5>
+            <p className="page-header-subtitle">Generate a new supplier purchase invoice</p>
+          </div>
+          <Link className="btn btn-outline-secondary" to="/purchase-invoices">← Back</Link>
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
         <form onSubmit={handleSubmit}>
+          <div className="form-section-title">Invoice Details</div>
           <div className="row g-3 mb-4">
-            <div className="col-md-6"><label className="form-label">Supplier Id</label><input className="form-control" value={formData.supplier} onChange={(e) => setFormData((c) => ({ ...c, supplier: e.target.value }))} required /></div>
+            <div className="col-md-6"><label className="form-label">Supplier ID</label><input className="form-control font-mono" value={formData.supplier} onChange={(e) => setFormData((c) => ({ ...c, supplier: e.target.value }))} required placeholder="Enter supplier ID" /></div>
             <div className="col-md-6"><label className="form-label">Invoice Date</label><input className="form-control" type="date" value={formData.invoiceDate} onChange={(e) => setFormData((c) => ({ ...c, invoiceDate: e.target.value }))} /></div>
-            <div className="col-12"><label className="form-label">Remarks</label><textarea className="form-control" rows="3" value={formData.remarks} onChange={(e) => setFormData((c) => ({ ...c, remarks: e.target.value }))} /></div>
+            <div className="col-12"><label className="form-label">Remarks</label><textarea className="form-control" rows="2" value={formData.remarks} onChange={(e) => setFormData((c) => ({ ...c, remarks: e.target.value }))} placeholder="Optional notes..." /></div>
           </div>
-          <div className="form-section-title">Items</div>
-          {formData.items.map((item, index) => (
-            <div className="row g-3 mb-3" key={index}>
-              <div className="col-md-5"><input className="form-control" placeholder="Item Name" value={item.itemName} onChange={(e) => updateItem(index, "itemName", e.target.value)} required /></div>
-              <div className="col-md-2"><input className="form-control" type="number" min="1" value={item.quantity} onChange={(e) => updateItem(index, "quantity", e.target.value)} required /></div>
-              <div className="col-md-2"><input className="form-control" type="number" min="0" step="0.01" value={item.rate} onChange={(e) => updateItem(index, "rate", e.target.value)} required /></div>
-              <div className="col-md-3"><input className="form-control" value={item.amount} readOnly /></div>
+
+          <div className="form-section-title">Line Items</div>
+          <div className="table-responsive border-0 mb-3">
+            <table className="table table-premium align-middle mb-0">
+              <thead>
+                <tr>
+                  <th style={{width: '35%'}}>Item Name</th>
+                  <th style={{width: '15%'}} className="text-end">Quantity</th>
+                  <th style={{width: '15%'}} className="text-end">Rate</th>
+                  <th style={{width: '15%'}} className="text-end">Amount</th>
+                  <th style={{width: '20%'}}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {formData.items.map((item, index) => (
+                  <tr key={index}>
+                    <td><input className="form-control form-control-sm" placeholder="Item name" value={item.itemName} onChange={(e) => updateItem(index, "itemName", e.target.value)} required /></td>
+                    <td><input className="form-control form-control-sm text-end" type="number" min="1" value={item.quantity} onChange={(e) => updateItem(index, "quantity", e.target.value)} required /></td>
+                    <td><input className="form-control form-control-sm text-end font-mono" type="number" min="0" step="0.01" value={item.rate} onChange={(e) => updateItem(index, "rate", e.target.value)} required placeholder="0.00" /></td>
+                    <td className="font-mono fw-semibold text-end">{Number(item.amount).toFixed(2)}</td>
+                    <td>
+                      {formData.items.length > 1 && (
+                        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setFormData((c) => ({ ...c, items: c.items.filter((_, i) => i !== index) }))}>
+                          Remove
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <button type="button" className="btn btn-sm btn-outline-primary mb-4" onClick={() => setFormData((c) => ({ ...c, items: [...c.items, { itemName: "", quantity: 1, rate: 0, amount: 0 }] }))}>+ Add Item</button>
+
+          <div className="d-flex justify-content-end">
+            <div style={{ minWidth: "220px" }}>
+              <div className="summary-row"><span className="summary-label">Subtotal</span><span className="summary-value">{totals.subtotal.toFixed(2)}</span></div>
+              <div className="summary-row"><span className="summary-label">Tax (18%)</span><span className="summary-value">{totals.taxAmount.toFixed(2)}</span></div>
+              <div className="summary-row total"><span className="summary-label">Grand Total</span><span className="summary-value">{totals.grandTotal.toFixed(2)}</span></div>
             </div>
-          ))}
-          <button type="button" className="btn btn-outline-primary mb-3" onClick={() => setFormData((c) => ({ ...c, items: [...c.items, { itemName: "", quantity: 1, rate: 0, amount: 0 }] }))}>+ Add Item</button>
-          <div className="text-end">
-            <div>Subtotal: {totals.subtotal.toFixed(2)}</div>
-            <div>Tax: {totals.taxAmount.toFixed(2)}</div>
-            <div className="fw-bold">Grand Total: {totals.grandTotal.toFixed(2)}</div>
           </div>
-          <div className="mt-4 d-flex gap-2">
+
+          <div className="d-flex gap-2 pt-3 border-top mt-3">
             <button className="btn btn-primary">Save Purchase Invoice</button>
             <Link className="btn btn-outline-secondary" to="/purchase-invoices">Cancel</Link>
           </div>

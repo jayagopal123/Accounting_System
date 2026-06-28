@@ -2,7 +2,7 @@ import MainLayout from "../../layouts/MainLayout";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { deleteAccount, getAccounts, updateStatus } from "../../services/accountApi";
-import { BsPencilSquare, BsToggleOff, BsToggleOn, BsTrash } from "react-icons/bs";
+import { BsPencilSquare, BsToggleOff, BsToggleOn, BsTrash, BsBook } from "react-icons/bs";
 
 function AccountListPage() {
   const [accounts, setAccounts] = useState([]);
@@ -61,8 +61,13 @@ function AccountListPage() {
     <MainLayout>
       <div className="page-card p-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2>Chart Of Accounts</h2>
-          <Link className="btn btn-primary" to="/accounts/new">+ New Account</Link>
+          <div>
+            <h5 className="page-header-title mb-1">Chart Of Accounts</h5>
+            <p className="page-header-subtitle">Manage your general ledger account structure</p>
+          </div>
+          <Link className="btn btn-primary d-flex align-items-center gap-2" to="/accounts/new">
+            <span>+</span> New Account
+          </Link>
         </div>
 
         {error ? <div className="alert alert-danger">{error}</div> : null}
@@ -91,8 +96,8 @@ function AccountListPage() {
         </div>
 
         <div className="table-responsive">
-          <table className="table table-hover align-middle mb-0">
-            <thead className="table-light">
+          <table className="table table-premium align-middle mb-0">
+            <thead>
               <tr>
                 <th>Code</th>
                 <th>Account Name</th>
@@ -108,8 +113,8 @@ function AccountListPage() {
                 <tr>
                   <td colSpan="7" className="text-center py-5">
                     <div className="d-flex flex-column align-items-center gap-2">
-                      <div className="spinner-border text-primary" role="status" aria-hidden="true" />
-                      <span className="text-muted">Loading accounts...</span>
+                      <div className="spinner-border text-secondary" role="status" aria-hidden="true" style={{ width: "1.25rem", height: "1.25rem" }} />
+                      <span className="text-muted small">Loading accounts...</span>
                     </div>
                   </td>
                 </tr>
@@ -117,49 +122,59 @@ function AccountListPage() {
                 <tr>
                   <td colSpan="7" className="text-center py-5">
                     <div className="d-flex flex-column align-items-center gap-2">
-                      <div className="fs-4">No accounts found</div>
-                      <div className="text-muted">Try adjusting the search or create a new account.</div>
+                      <div className="empty-state-icon">
+                        <BsBook size={18} />
+                      </div>
+                      <div className="fw-semibold text-dark" style={{ fontSize: "0.875rem" }}>No accounts found</div>
+                      <div className="text-muted small">Try adjusting the search or create a new account.</div>
                     </div>
                   </td>
                 </tr>
               ) : (
                 filteredAccounts.map((account) => (
                   <tr key={account._id}>
-                    <td>{account.accountCode}</td>
-                    <td>{account.accountName}</td>
-                    <td>{account.accountType}</td>
-                    <td>{account.currency}</td>
-                    <td>{account.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0.00"}</td>
+                    <td className="fw-semibold font-mono">{account.accountCode}</td>
+                    <td className="fw-medium">{account.accountName}</td>
                     <td>
-                      <span className={`badge rounded-pill px-3 py-2 ${account.status === "ACTIVE" ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary"}`}>
+                      <span className="badge-premium" style={{
+                        backgroundColor: account.accountType === 'ASSET' ? '#e2f5ea' : account.accountType === 'LIABILITY' ? '#fef9c3' : account.accountType === 'EQUITY' ? '#dbeafe' : account.accountType === 'INCOME' ? '#ede9fe' : '#fce7f3',
+                        color: account.accountType === 'ASSET' ? '#047857' : account.accountType === 'LIABILITY' ? '#854d0e' : account.accountType === 'EQUITY' ? '#1e40af' : account.accountType === 'INCOME' ? '#6d28d9' : '#be185d'
+                      }}>{account.accountType}</span>
+                    </td>
+                    <td className="font-mono text-muted">{account.currency}</td>
+                    <td className="font-mono fw-semibold text-end">{account.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0.00"}</td>
+                    <td>
+                      <span className={`badge-premium ${account.status === "ACTIVE" ? "badge-premium-active" : "badge-premium-cancelled"}`}>
                         {account.status}
                       </span>
                     </td>
                     <td className="text-end">
-                      <Link
-                        className="btn btn-sm btn-outline-warning rounded-circle me-2"
-                        to={`/accounts/${account._id}/edit`}
-                        aria-label={`Edit ${account.accountName}`}
-                        title="Edit"
-                      >
-                        <BsPencilSquare />
-                      </Link>
-                      <button
-                        className="btn btn-sm btn-outline-secondary rounded-circle me-2"
-                        onClick={() => handleStatus(account._id, account.status === "ACTIVE" ? "INACTIVE" : "ACTIVE")}
-                        aria-label={account.status === "ACTIVE" ? `Deactivate ${account.accountName}` : `Activate ${account.accountName}`}
-                        title={account.status === "ACTIVE" ? "Deactivate" : "Activate"}
-                      >
-                        {account.status === "ACTIVE" ? <BsToggleOn /> : <BsToggleOff />}
-                      </button>
-                      <button
-                        className="btn btn-sm btn-outline-danger rounded-circle"
-                        onClick={() => handleDelete(account._id)}
-                        aria-label={`Delete ${account.accountName}`}
-                        title="Delete"
-                      >
-                        <BsTrash />
-                      </button>
+                      <div className="d-flex gap-1 justify-content-end">
+                        <Link
+                          className="btn btn-sm btn-outline-secondary"
+                          to={`/accounts/${account._id}/edit`}
+                          aria-label={`Edit ${account.accountName}`}
+                          title="Edit"
+                        >
+                          <BsPencilSquare size={13} />
+                        </Link>
+                        <button
+                          className="btn btn-sm btn-outline-secondary"
+                          onClick={() => handleStatus(account._id, account.status === "ACTIVE" ? "INACTIVE" : "ACTIVE")}
+                          aria-label={account.status === "ACTIVE" ? `Deactivate ${account.accountName}` : `Activate ${account.accountName}`}
+                          title={account.status === "ACTIVE" ? "Deactivate" : "Activate"}
+                        >
+                          {account.status === "ACTIVE" ? <BsToggleOn size={13} /> : <BsToggleOff size={13} />}
+                        </button>
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => handleDelete(account._id)}
+                          aria-label={`Delete ${account.accountName}`}
+                          title="Delete"
+                        >
+                          <BsTrash size={13} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
