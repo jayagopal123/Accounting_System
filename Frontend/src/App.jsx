@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
+import { AuthProvider } from "./contexts/AuthContext";
 import Dashboard from "./pages/Dashboard";
 import AccountListPage from "./pages/accounts/AccountListPage";
 import CreateAccountPage from "./pages/accounts/CreateAccountPage";
@@ -26,6 +27,7 @@ import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
 function App() {
   return (
+    <AuthProvider>
     <BrowserRouter>
       <Routes>
         {/* Authentication Routes SYSTEM */}
@@ -55,6 +57,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </AuthProvider>
   );
 }
 

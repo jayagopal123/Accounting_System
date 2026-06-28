@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../../layouts/AuthLayout";
+import { useAuth } from "../../contexts/AuthContext";
 import axios from "axios";
 import {
   FaCircleNotch,
@@ -10,6 +11,7 @@ import {
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { setUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -42,7 +44,7 @@ function LoginPage() {
       const { token, user } = response.data.data;
 
       localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      setUser(user);
 
       setSuccess(true);
 

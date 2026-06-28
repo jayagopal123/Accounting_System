@@ -5,10 +5,40 @@ const Role = require('../src/models/Role');
 const User = require('../src/models/User');
 
 const permissionsData = [
-  { name: 'invoices:create', module: 'accounting', description: 'Allows creating customer invoices' },
-  { name: 'invoices:read', module: 'accounting', description: 'Allows viewing customer invoices' },
-  { name: 'invoices:update', module: 'accounting', description: 'Allows modifying existing customer invoices' },
-  { name: 'invoices:delete', module: 'accounting', description: 'Allows deleting customer invoices' },
+  // Customers
+  { name: 'customers:create', module: 'customers', description: 'Allows creating customer records' },
+  { name: 'customers:view', module: 'customers', description: 'Allows viewing customer records' },
+  { name: 'customers:update', module: 'customers', description: 'Allows modifying customer records' },
+  { name: 'customers:delete', module: 'customers', description: 'Allows deleting customer records' },
+
+  // Suppliers
+  { name: 'suppliers:create', module: 'suppliers', description: 'Allows creating supplier records' },
+  { name: 'suppliers:view', module: 'suppliers', description: 'Allows viewing supplier records' },
+  { name: 'suppliers:update', module: 'suppliers', description: 'Allows modifying supplier records' },
+  { name: 'suppliers:delete', module: 'suppliers', description: 'Allows deleting supplier records' },
+
+  // Journal Entries
+  { name: 'journal_entries:create', module: 'accounting', description: 'Allows creating journal entries' },
+  { name: 'journal_entries:view', module: 'accounting', description: 'Allows viewing journal entries' },
+  { name: 'journal_entries:update', module: 'accounting', description: 'Allows modifying journal entries' },
+  { name: 'journal_entries:submit', module: 'accounting', description: 'Allows submitting journal entries' },
+  { name: 'journal_entries:cancel', module: 'accounting', description: 'Allows cancelling journal entries' },
+
+  // Sales Invoices
+  { name: 'sales_invoices:create', module: 'accounting', description: 'Allows creating sales invoices' },
+  { name: 'sales_invoices:view', module: 'accounting', description: 'Allows viewing sales invoices' },
+  { name: 'sales_invoices:update', module: 'accounting', description: 'Allows modifying sales invoices' },
+  { name: 'sales_invoices:submit', module: 'accounting', description: 'Allows submitting sales invoices' },
+  { name: 'sales_invoices:cancel', module: 'accounting', description: 'Allows cancelling sales invoices' },
+
+  // Purchase Invoices
+  { name: 'purchase_invoices:create', module: 'accounting', description: 'Allows creating purchase invoices' },
+  { name: 'purchase_invoices:view', module: 'accounting', description: 'Allows viewing purchase invoices' },
+  { name: 'purchase_invoices:update', module: 'accounting', description: 'Allows modifying purchase invoices' },
+  { name: 'purchase_invoices:submit', module: 'accounting', description: 'Allows submitting purchase invoices' },
+  { name: 'purchase_invoices:cancel', module: 'accounting', description: 'Allows cancelling purchase invoices' },
+
+  // Roles
   { name: 'roles:create', module: 'settings', description: 'Allows creating and mapping security roles' }
 ];
 
@@ -48,13 +78,13 @@ const seed = async () => {
     const accountantRole = await Role.create({
       name: 'ACCOUNTANT',
       description: 'Accountant officer with standard ledger and invoice modify access',
-      permissions: getPermIds(['invoices:create', 'invoices:read', 'invoices:update'])
+      permissions: getPermIds(['sales_invoices:create', 'sales_invoices:view', 'sales_invoices:update', 'purchase_invoices:create', 'purchase_invoices:view', 'purchase_invoices:update', 'journal_entries:create', 'journal_entries:view', 'journal_entries:update', 'journal_entries:submit', 'customers:view', 'suppliers:view'])
     });
 
     const auditorRole = await Role.create({
       name: 'AUDITOR',
       description: 'Internal or external compliance auditor with read-only permissions',
-      permissions: getPermIds(['invoices:read'])
+      permissions: getPermIds(['sales_invoices:view', 'purchase_invoices:view', 'journal_entries:view', 'customers:view', 'suppliers:view'])
     });
 
     console.log('Seeded roles: SYSTEM_ADMIN, ACCOUNTANT, AUDITOR.');

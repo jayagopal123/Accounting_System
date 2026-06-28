@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
+import { useAuth } from "../../contexts/AuthContext";
 import { activateCustomer, blockCustomer, deleteCustomer, getCustomers } from "../../services/customerApi";
 import { BsPeople, BsPencilSquare, BsTrash, BsToggleOn, BsToggleOff } from "react-icons/bs";
 
 function CustomerListPage() {
+  const { hasPermission } = useAuth();
+  const canCreate = hasPermission("customers:create");
+  const canUpdate = hasPermission("customers:update");
+  const canDelete = hasPermission("customers:delete");
+
   const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -40,6 +46,8 @@ function CustomerListPage() {
     }
   };
 
+  const colSpan = 5 + (canUpdate || canDelete ? 1 : 0);
+
   return (
     <MainLayout>
       <div className="page-card p-4">
@@ -48,9 +56,11 @@ function CustomerListPage() {
             <h5 className="page-header-title mb-1">Customers</h5>
             <p className="page-header-subtitle">Manage customer master records</p>
           </div>
-          <Link className="btn btn-primary d-flex align-items-center gap-2" to="/customers/new">
-            <span>+</span> New Customer
-          </Link>
+          {canCreate && (
+            <Link className="btn btn-primary d-flex align-items-center gap-2" to="/customers/new">
+              <span>+</span> New Customer
+            </Link>
+          )}
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
         <div className="row g-3 mb-3">
@@ -67,19 +77,19 @@ function CustomerListPage() {
                 <th>Company</th>
                 <th>Currency</th>
                 <th>Status</th>
-                <th className="text-end">Actions</th>
+                {canUpdate || canDelete ? <th className="text-end">Actions</th> : null}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="6" className="text-center py-5">
+                <tr><td colSpan={colSpan} className="text-center py-5">
                   <div className="d-flex flex-column align-items-center gap-2">
                     <div className="spinner-border text-secondary" role="status" style={{ width: "1.25rem", height: "1.25rem" }} />
                     <span className="text-muted small">Loading customers...</span>
                   </div>
                 </td></tr>
               ) : customers.length === 0 ? (
-                <tr><td colSpan="6" className="text-center py-5">
+                <tr><td colSpan={colSpan} className="text-center py-5">
                   <div className="d-flex flex-column align-items-center gap-2">
                     <div className="empty-state-icon"><BsPeople size={18} /></div>
                     <div className="fw-semibold text-dark" style={{ fontSize: "0.875rem" }}>No customers found</div>
@@ -93,19 +103,27 @@ function CustomerListPage() {
                   <td className="text-muted">{customer.company || "—"}</td>
                   <td className="font-mono">{customer.defaultCurrency}</td>
                   <td><span className={`badge-premium ${customer.status === "Active" ? "badge-premium-active" : "badge-premium-blocked"}`}>{customer.status}</span></td>
-                  <td className="text-end">
-                    <div className="d-flex gap-1 justify-content-end">
-                      <Link className="btn btn-sm btn-outline-secondary" to={`/customers/${customer._id}/edit`} title="Edit">
-                        <BsPencilSquare size={13} />
-                      </Link>
-                      <button className="btn btn-sm btn-outline-secondary" onClick={() => handleAction(() => customer.status === "Blocked" ? activateCustomer(customer._id) : blockCustomer(customer._id))} title={customer.status === "Blocked" ? "Activate" : "Block"}>
-                        {customer.status === "Blocked" ? <BsToggleOff size={13} /> : <BsToggleOn size={13} />}
-                      </button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => window.confirm("Delete this customer?") && handleAction(() => deleteCustomer(customer._id))} title="Delete">
-                        <BsTrash size={13} />
-                      </button>
-                    </div>
-                  </td>
+                  {canUpdate || canDelete ? (
+                    <td className="text-end">
+                      <div className="d-flex gap-1 justify-content-end">
+                        {canUpdate && (
+                          <Link className="btn btn-sm btn-outline-secondary" to={`/customers/${customer._id}/edit`} title="Edit">
+                            <BsPencilSquare size={13} />
+                          </Link>
+                        )}
+                        {canUpdate && (
+                          <button className="btn btn-sm btn-outline-secondary" onClick={() => handleAction(() => customer.status === "Blocked" ? activateCustomer(customer._id) : blockCustomer(customer._id))} title={customer.status === "Blocked" ? "Activate" : "Block"}>
+                            {customer.status === "Blocked" ? <BsToggleOff size={13} /> : <BsToggleOn size={13} />}
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button className="btn btn-sm btn-outline-danger" onClick={() => window.confirm("Delete this customer?") && handleAction(() => deleteCustomer(customer._id))} title="Delete">
+                            <BsTrash size={13} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>

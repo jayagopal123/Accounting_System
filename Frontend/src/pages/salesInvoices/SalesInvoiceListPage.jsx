@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
+import { useAuth } from "../../contexts/AuthContext";
 import { cancelSalesInvoice, getSalesInvoices, submitSalesInvoice } from "../../services/salesInvoiceApi";
 import { BsFileText, BsCheckLg, BsXLg } from "react-icons/bs";
 
 function SalesInvoiceListPage() {
+  const { hasPermission } = useAuth();
+  const canCreate = hasPermission("sales_invoices:create");
+  const canSubmit = hasPermission("sales_invoices:submit");
+  const canCancel = hasPermission("sales_invoices:cancel");
+
   const [invoices, setInvoices] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [error, setError] = useState("");
@@ -41,6 +47,8 @@ function SalesInvoiceListPage() {
     }
   };
 
+  const colSpan = 5 + (canSubmit || canCancel ? 1 : 0);
+
   return (
     <MainLayout>
       <div className="page-card p-4">
@@ -49,9 +57,11 @@ function SalesInvoiceListPage() {
             <h5 className="page-header-title mb-1">Sales Invoices</h5>
             <p className="page-header-subtitle">Manage customer sales transactions</p>
           </div>
-          <Link className="btn btn-primary d-flex align-items-center gap-2" to="/sales-invoices/new">
-            <span>+</span> New Invoice
-          </Link>
+          {canCreate && (
+            <Link className="btn btn-primary d-flex align-items-center gap-2" to="/sales-invoices/new">
+              <span>+</span> New Invoice
+            </Link>
+          )}
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
         <div className="row g-3 mb-3">
@@ -73,19 +83,19 @@ function SalesInvoiceListPage() {
                 <th>Customer</th>
                 <th className="text-end">Grand Total</th>
                 <th>Status</th>
-                <th className="text-end">Actions</th>
+                {canSubmit || canCancel ? <th className="text-end">Actions</th> : null}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="6" className="text-center py-5">
+                <tr><td colSpan={colSpan} className="text-center py-5">
                   <div className="d-flex flex-column align-items-center gap-2">
                     <div className="spinner-border text-secondary" role="status" style={{ width: "1.25rem", height: "1.25rem" }} />
                     <span className="text-muted small">Loading invoices...</span>
                   </div>
                 </td></tr>
               ) : filteredInvoices.length === 0 ? (
-                <tr><td colSpan="6" className="text-center py-5">
+                <tr><td colSpan={colSpan} className="text-center py-5">
                   <div className="d-flex flex-column align-items-center gap-2">
                     <div className="empty-state-icon"><BsFileText size={18} /></div>
                     <div className="fw-semibold text-dark" style={{ fontSize: "0.875rem" }}>No sales invoices found</div>
@@ -99,20 +109,22 @@ function SalesInvoiceListPage() {
                   <td className="fw-medium">{invoice.customer?.customerName || invoice.customer}</td>
                   <td className="font-mono fw-semibold text-end">{Number(invoice.grandTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                   <td><span className={`badge-premium ${invoice.status === "Draft" ? "badge-premium-draft" : invoice.status === "Submitted" ? "badge-premium-submitted" : "badge-premium-cancelled"}`}>{invoice.status}</span></td>
-                  <td className="text-end">
-                    <div className="d-flex gap-1 justify-content-end">
-                      {invoice.status === "Draft" ? (
-                        <button className="btn btn-sm btn-outline-success" onClick={() => handleAction(() => submitSalesInvoice(invoice._id))} title="Submit">
-                          <BsCheckLg size={13} />
-                        </button>
-                      ) : null}
-                      {invoice.status !== "Cancelled" ? (
-                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleAction(() => cancelSalesInvoice(invoice._id))} title="Cancel">
-                          <BsXLg size={13} />
-                        </button>
-                      ) : null}
-                    </div>
-                  </td>
+                  {canSubmit || canCancel ? (
+                    <td className="text-end">
+                      <div className="d-flex gap-1 justify-content-end">
+                        {canSubmit && invoice.status === "Draft" ? (
+                          <button className="btn btn-sm btn-outline-success" onClick={() => handleAction(() => submitSalesInvoice(invoice._id))} title="Submit">
+                            <BsCheckLg size={13} />
+                          </button>
+                        ) : null}
+                        {canCancel && invoice.status !== "Cancelled" ? (
+                          <button className="btn btn-sm btn-outline-danger" onClick={() => handleAction(() => cancelSalesInvoice(invoice._id))} title="Cancel">
+                            <BsXLg size={13} />
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
