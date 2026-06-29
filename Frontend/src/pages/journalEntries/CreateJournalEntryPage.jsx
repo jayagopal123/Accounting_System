@@ -1,11 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
+import { useAuth } from "../../contexts/AuthContext";
 import { getAccounts } from "../../services/accountApi";
 import { createJournalEntry } from "../../services/journalEntryApi";
 
 function CreateJournalEntryPage() {
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
+
+  useEffect(() => {
+    if (!hasPermission("journal_entries:create")) {
+      navigate("/journal-entries", { replace: true });
+    }
+  }, [hasPermission, navigate]);
+
   const [accounts, setAccounts] = useState([]);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
@@ -63,7 +72,8 @@ function CreateJournalEntryPage() {
       await createJournalEntry(formData);
       navigate("/journal-entries");
     } catch (err) {
-      setError(String(err));
+      const msg = String(err);
+      if (!msg.includes("Access denied")) setError(msg);
     }
   };
 
@@ -78,6 +88,7 @@ function CreateJournalEntryPage() {
           <Link className="btn btn-outline-secondary" to="/journal-entries">← Back</Link>
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
+        {hasPermission("journal_entries:create") && (
         <form onSubmit={handleSubmit}>
           <div className="form-section-title">Voucher Details</div>
           <div className="row g-3 mb-4">
@@ -158,6 +169,7 @@ function CreateJournalEntryPage() {
             <Link className="btn btn-outline-secondary" to="/journal-entries">Cancel</Link>
           </div>
         </form>
+        )}
       </div>
     </MainLayout>
   );

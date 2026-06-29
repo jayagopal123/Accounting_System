@@ -1,11 +1,20 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
+import { useAuth } from "../../contexts/AuthContext";
 import { getCustomerById, updateCustomer } from "../../services/customerApi";
 
 function EditCustomerPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
+
+  useEffect(() => {
+    if (!hasPermission("customers:update")) {
+      navigate("/customers", { replace: true });
+    }
+  }, [hasPermission, navigate]);
+
   const [formData, setFormData] = useState(null);
   const [error, setError] = useState("");
 
@@ -20,7 +29,8 @@ function EditCustomerPage() {
           contacts: customer.contacts?.length ? customer.contacts : [{}],
         });
       } catch (err) {
-        setError(String(err));
+        const msg = String(err);
+        if (!msg.includes("Access denied")) setError(msg);
       }
     };
     loadCustomer();
@@ -34,7 +44,8 @@ function EditCustomerPage() {
       await updateCustomer(id, formData);
       navigate("/customers");
     } catch (err) {
-      setError(String(err));
+      const msg = String(err);
+      if (!msg.includes("Access denied")) setError(msg);
     }
   };
 

@@ -1,11 +1,20 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
+import { useAuth } from "../../contexts/AuthContext";
 import { getSupplierById, updateSupplier } from "../../services/supplierApi";
 
 function EditSupplierPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
+
+  useEffect(() => {
+    if (!hasPermission("suppliers:update")) {
+      navigate("/suppliers", { replace: true });
+    }
+  }, [hasPermission, navigate]);
+
   const [formData, setFormData] = useState(null);
   const [error, setError] = useState("");
 
@@ -20,7 +29,8 @@ function EditSupplierPage() {
           contacts: supplier.contacts?.length ? supplier.contacts : [{}],
         });
       } catch (err) {
-        setError(String(err));
+        const msg = String(err);
+        if (!msg.includes("Access denied")) setError(msg);
       }
     };
     loadSupplier();
@@ -34,7 +44,8 @@ function EditSupplierPage() {
       await updateSupplier(id, formData);
       navigate("/suppliers");
     } catch (err) {
-      setError(String(err));
+      const msg = String(err);
+      if (!msg.includes("Access denied")) setError(msg);
     }
   };
 

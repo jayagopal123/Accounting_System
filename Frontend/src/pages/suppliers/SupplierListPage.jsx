@@ -27,7 +27,8 @@ function SupplierListPage() {
       setPage(response.data.data.page || 1);
       setError("");
     } catch (err) {
-      setError(String(err));
+      const msg = String(err);
+      if (!msg.includes("Access denied")) setError(msg);
     } finally {
       setLoading(false);
     }

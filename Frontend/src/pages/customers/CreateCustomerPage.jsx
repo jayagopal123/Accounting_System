@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
+import { useAuth } from "../../contexts/AuthContext";
 import { createCustomer } from "../../services/customerApi";
 
 const initialForm = {
@@ -27,6 +28,14 @@ const initialForm = {
 
 function CreateCustomerPage() {
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
+
+  useEffect(() => {
+    if (!hasPermission("customers:create")) {
+      navigate("/customers", { replace: true });
+    }
+  }, [hasPermission, navigate]);
+
   const [formData, setFormData] = useState(initialForm);
   const [error, setError] = useState("");
 
@@ -41,7 +50,8 @@ function CreateCustomerPage() {
       });
       navigate("/customers");
     } catch (err) {
-      setError(String(err));
+      const msg = String(err);
+      if (!msg.includes("Access denied")) setError(msg);
     }
   };
 
@@ -56,6 +66,7 @@ function CreateCustomerPage() {
           <Link className="btn btn-outline-secondary" to="/customers">← Back</Link>
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
+        {hasPermission("customers:create") && (
         <form onSubmit={handleSubmit}>
           <div className="form-section-title">Basic Information</div>
           <div className="row g-3 mb-4">
@@ -110,6 +121,7 @@ function CreateCustomerPage() {
             <Link className="btn btn-outline-secondary" to="/customers">Cancel</Link>
           </div>
         </form>
+        )}
       </div>
     </MainLayout>
   );

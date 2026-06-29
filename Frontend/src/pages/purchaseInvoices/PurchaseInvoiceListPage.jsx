@@ -23,7 +23,8 @@ function PurchaseInvoiceListPage() {
       setInvoices(response.data.data);
       setError("");
     } catch (err) {
-      setError(String(err));
+      const msg = String(err);
+      if (!msg.includes("Access denied")) setError(msg);
     } finally {
       setLoading(false);
     }

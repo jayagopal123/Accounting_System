@@ -1,8 +1,8 @@
-const mongoose = require('mongoose');
-const env = require('../src/config/env');
-const Permission = require('../src/models/Permission');
-const Role = require('../src/models/Role');
-const User = require('../src/models/User');
+import mongoose from 'mongoose';
+import env from '../src/config/env.js';
+import Permission from '../src/models/Permission.js';
+import Role from '../src/models/Role.js';
+import User from '../src/models/User.js';
 
 const permissionsData = [
   // Customers

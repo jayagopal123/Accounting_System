@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
+import { useAuth } from "../../contexts/AuthContext";
 import { createSupplier } from "../../services/supplierApi";
 
 const initialForm = {
@@ -27,6 +28,14 @@ const initialForm = {
 
 function CreateSupplierPage() {
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
+
+  useEffect(() => {
+    if (!hasPermission("suppliers:create")) {
+      navigate("/suppliers", { replace: true });
+    }
+  }, [hasPermission, navigate]);
+
   const [formData, setFormData] = useState(initialForm);
   const [error, setError] = useState("");
 
@@ -38,7 +47,8 @@ function CreateSupplierPage() {
       await createSupplier({ ...formData, tags: formData.tags.filter(Boolean) });
       navigate("/suppliers");
     } catch (err) {
-      setError(String(err));
+      const msg = String(err);
+      if (!msg.includes("Access denied")) setError(msg);
     }
   };
 
@@ -53,6 +63,7 @@ function CreateSupplierPage() {
           <Link className="btn btn-outline-secondary" to="/suppliers">← Back</Link>
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
+        {hasPermission("suppliers:create") && (
         <form onSubmit={handleSubmit}>
           <div className="form-section-title">Basic Information</div>
           <div className="row g-3 mb-4">
@@ -107,6 +118,7 @@ function CreateSupplierPage() {
             <Link className="btn btn-outline-secondary" to="/suppliers">Cancel</Link>
           </div>
         </form>
+        )}
       </div>
     </MainLayout>
   );

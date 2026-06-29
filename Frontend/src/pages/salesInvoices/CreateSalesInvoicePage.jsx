@@ -1,10 +1,19 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
+import { useAuth } from "../../contexts/AuthContext";
 import { createSalesInvoice } from "../../services/salesInvoiceApi";
 
 function CreateSalesInvoicePage() {
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
+
+  useEffect(() => {
+    if (!hasPermission("sales_invoices:create")) {
+      navigate("/sales-invoices", { replace: true });
+    }
+  }, [hasPermission, navigate]);
+
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     customer: "",
@@ -36,7 +45,8 @@ function CreateSalesInvoicePage() {
       await createSalesInvoice(formData);
       navigate("/sales-invoices");
     } catch (err) {
-      setError(String(err));
+      const msg = String(err);
+      if (!msg.includes("Access denied")) setError(msg);
     }
   };
 
@@ -51,6 +61,7 @@ function CreateSalesInvoicePage() {
           <Link className="btn btn-outline-secondary" to="/sales-invoices">← Back</Link>
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
+        {hasPermission("sales_invoices:create") && (
         <form onSubmit={handleSubmit}>
           <div className="form-section-title">Invoice Details</div>
           <div className="row g-3 mb-4">
@@ -106,6 +117,7 @@ function CreateSalesInvoicePage() {
             <Link className="btn btn-outline-secondary" to="/sales-invoices">Cancel</Link>
           </div>
         </form>
+        )}
       </div>
     </MainLayout>
   );
