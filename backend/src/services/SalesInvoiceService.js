@@ -51,11 +51,11 @@ class SalesInvoiceService {
   }
 
   async getSalesInvoices() {
-    return salesInvoiceRepository.findAll();
+    return salesInvoiceRepository.find({}, "customer");
   }
 
   async getSalesInvoiceById(id) {
-    const invoice = await salesInvoiceRepository.findById(id);
+    const invoice = await salesInvoiceRepository.findById(id, "customer");
 
     if (!invoice) {
       throw new ApiError(

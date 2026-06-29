@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import Dashboard from "./pages/Dashboard";
@@ -44,29 +45,29 @@ function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Core Ledger Workspace Routes */}
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/accounts" element={<AccountListPage />} />
-        <Route path="/accounts/new" element={<CreateAccountPage />} />
-        <Route path="/accounts/:id/edit" element={<EditAccountPage />} />
-        <Route path="/customers" element={<CustomerListPage />} />
-        <Route path="/customers/new" element={<CreateCustomerPage />} />
-        <Route path="/customers/:id/edit" element={<EditCustomerPage />} />
-        <Route path="/suppliers" element={<SupplierListPage />} />
-        <Route path="/suppliers/new" element={<CreateSupplierPage />} />
-        <Route path="/suppliers/:id/edit" element={<EditSupplierPage />} />
-        <Route path="/journal-entries" element={<JournalEntryListPage />} />
-        <Route path="/journal-entries/new" element={<CreateJournalEntryPage />} />
-        <Route path="/sales-invoices" element={<SalesInvoiceListPage />} />
-        <Route path="/sales-invoices/new" element={<CreateSalesInvoicePage />} />
-        <Route path="/purchase-invoices" element={<PurchaseInvoiceListPage />} />
-        <Route path="/purchase-invoices/new" element={<CreatePurchaseInvoicePage />} />
-        <Route path="/purchase-invoices/:id/edit" element={<EditPurchaseInvoicePage />} />
-        <Route path="/sales-invoices/:id/edit" element={<EditSalesInvoicePage />} />
-        <Route path="/journal-entries/:id/edit" element={<EditJournalEntryPage />} />
-        <Route path="/system-logs" element={<SystemLogsPage />} />
+        <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/accounts" element={<ProtectedRoute><AccountListPage /></ProtectedRoute>} />
+        <Route path="/accounts/new" element={<ProtectedRoute><CreateAccountPage /></ProtectedRoute>} />
+        <Route path="/accounts/:id/edit" element={<ProtectedRoute><EditAccountPage /></ProtectedRoute>} />
+        <Route path="/customers" element={<ProtectedRoute><CustomerListPage /></ProtectedRoute>} />
+        <Route path="/customers/new" element={<ProtectedRoute><CreateCustomerPage /></ProtectedRoute>} />
+        <Route path="/customers/:id/edit" element={<ProtectedRoute><EditCustomerPage /></ProtectedRoute>} />
+        <Route path="/suppliers" element={<ProtectedRoute><SupplierListPage /></ProtectedRoute>} />
+        <Route path="/suppliers/new" element={<ProtectedRoute><CreateSupplierPage /></ProtectedRoute>} />
+        <Route path="/suppliers/:id/edit" element={<ProtectedRoute><EditSupplierPage /></ProtectedRoute>} />
+        <Route path="/journal-entries" element={<ProtectedRoute><JournalEntryListPage /></ProtectedRoute>} />
+        <Route path="/journal-entries/new" element={<ProtectedRoute><CreateJournalEntryPage /></ProtectedRoute>} />
+        <Route path="/sales-invoices" element={<ProtectedRoute><SalesInvoiceListPage /></ProtectedRoute>} />
+        <Route path="/sales-invoices/new" element={<ProtectedRoute><CreateSalesInvoicePage /></ProtectedRoute>} />
+        <Route path="/purchase-invoices" element={<ProtectedRoute><PurchaseInvoiceListPage /></ProtectedRoute>} />
+        <Route path="/purchase-invoices/new" element={<ProtectedRoute><CreatePurchaseInvoicePage /></ProtectedRoute>} />
+        <Route path="/purchase-invoices/:id/edit" element={<ProtectedRoute><EditPurchaseInvoicePage /></ProtectedRoute>} />
+        <Route path="/sales-invoices/:id/edit" element={<ProtectedRoute><EditSalesInvoicePage /></ProtectedRoute>} />
+        <Route path="/journal-entries/:id/edit" element={<ProtectedRoute><EditJournalEntryPage /></ProtectedRoute>} />
+        <Route path="/system-logs" element={<ProtectedRoute><SystemLogsPage /></ProtectedRoute>} />
         
         {/* Global Fallback Route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
     </AuthProvider>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import AuthLayout from "../../layouts/AuthLayout";
 import { useAuth } from "../../contexts/AuthContext";
 import axios from "axios";
@@ -11,7 +11,13 @@ import {
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { user, setUser } = useAuth();
+
+  // Already authenticated — skip to dashboard
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 

@@ -52,12 +52,12 @@ class PurchaseInvoiceService {
   }
 
   async getPurchaseInvoices() {
-    return purchaseInvoiceRepository.findAll();
+    return purchaseInvoiceRepository.find({}, "supplier");
   }
 
   async getPurchaseInvoiceById(id) {
     const invoice =
-      await purchaseInvoiceRepository.findById(id);
+      await purchaseInvoiceRepository.findById(id, "supplier");
 
     if (!invoice) {
       throw new ApiError(

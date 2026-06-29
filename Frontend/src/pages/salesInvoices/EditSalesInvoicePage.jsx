@@ -18,8 +18,9 @@ function EditSalesInvoicePage() {
 
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState(null);
 
   useEffect(() => {
