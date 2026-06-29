@@ -23,6 +23,8 @@ export const createCustomerSchema = Joi.object({
 
   creditLimit: Joi.number().min(0),
 
+  openingBalance: Joi.number().min(0),
+
   paymentTerms: Joi.string(),
 
   creditDays: Joi.number().min(0),

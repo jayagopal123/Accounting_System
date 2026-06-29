@@ -1,0 +1,235 @@
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import MainLayout from "../../layouts/MainLayout";
+import { useAuth } from "../../contexts/AuthContext";
+import { getAccounts } from "../../services/accountApi";
+import { getJournalEntryById, updateJournalEntry } from "../../services/journalEntryApi";
+
+function EditJournalEntryPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { hasPermission } = useAuth();
+
+  useEffect(() => {
+    if (!hasPermission("journal_entries:update")) {
+      navigate("/journal-entries", { replace: true });
+    }
+  }, [hasPermission, navigate]);
+
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [formData, setFormData] = useState(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [entryResponse, accountsResponse] = await Promise.all([
+          getJournalEntryById(id),
+          getAccounts(),
+        ]);
+        const entry = entryResponse.data.data;
+        setAccounts(accountsResponse.data.data || []);
+        setFormData({
+          date: entry.date ? new Date(entry.date).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+          referenceType: entry.referenceType || "",
+          referenceNumber: entry.referenceNumber || "",
+          remarks: entry.remarks || "",
+          lineItems: entry.lineItems?.length
+            ? entry.lineItems.map((li) => ({
+                account: li.account?._id || li.account || "",
+                debitAmount: li.debitAmount || 0,
+                creditAmount: li.creditAmount || 0,
+                description: li.description || "",
+              }))
+            : [
+                { account: "", debitAmount: 0, creditAmount: 0, description: "" },
+                { account: "", debitAmount: 0, creditAmount: 0, description: "" },
+              ],
+        });
+      } catch (err) {
+        const msg = String(err);
+        if (!msg.includes("Access denied")) setError(msg);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [id]);
+
+  const totals = useMemo(() => {
+    if (!formData) return { debit: 0, credit: 0 };
+    return formData.lineItems.reduce(
+      (acc, item) => ({
+        debit: acc.debit + Number(item.debitAmount || 0),
+        credit: acc.credit + Number(item.creditAmount || 0),
+      }),
+      { debit: 0, credit: 0 }
+    );
+  }, [formData?.lineItems]);
+
+  const updateLineItem = (index, field, value) => {
+    setFormData((current) => ({
+      ...current,
+      lineItems: current.lineItems.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [field]: field.includes("Amount") ? Number(value) : value } : item
+      ),
+    }));
+  };
+
+  const addLine = () => {
+    setFormData((current) => ({
+      ...current,
+      lineItems: [...current.lineItems, { account: "", debitAmount: 0, creditAmount: 0, description: "" }],
+    }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    try {
+      setSubmitting(true);
+      setError("");
+      await updateJournalEntry(id, formData);
+      setSuccess(true);
+      setTimeout(() => navigate("/journal-entries"), 800);
+    } catch (err) {
+      const msg = String(err);
+      if (!msg.includes("Access denied")) setError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <MainLayout>
+      <div className="page-card p-4">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h5 className="page-header-title mb-1">Edit Journal Entry</h5>
+            <p className="page-header-subtitle">Modify general journal voucher</p>
+          </div>
+          <Link className="btn btn-outline-secondary" to="/journal-entries">← Back</Link>
+        </div>
+        {error ? <div className="alert alert-danger">{error}</div> : null}
+        {success && (
+          <div className="alert alert-success d-flex align-items-center gap-2 mb-3" style={{ fontSize: "0.8rem", backgroundColor: "#ecfdf5", color: "#065f46", border: "none" }}>
+            <span>Journal entry updated successfully. Redirecting...</span>
+          </div>
+        )}
+        {loading ? (
+          <div className="d-flex align-items-center gap-2 py-4">
+            <div className="spinner-border spinner-border-sm text-secondary" role="status" />
+            <span className="text-muted small">Loading journal entry...</span>
+          </div>
+        ) : formData && (
+          <form onSubmit={handleSubmit}>
+            <div className="form-section-title">Voucher Details</div>
+            <div className="row g-3 mb-4">
+              <div className="col-md-3">
+                <label className="form-label">Date</label>
+                <input className="form-control" type="date" value={formData.date} onChange={(e) => setFormData((c) => ({ ...c, date: e.target.value }))} />
+              </div>
+              <div className="col-md-4">
+                <label className="form-label">Reference Type</label>
+                <select className="form-select" value={formData.referenceType} onChange={(e) => setFormData((c) => ({ ...c, referenceType: e.target.value }))}>
+                  <option value="">Select type</option>
+                  <option value="Sales">Sales</option>
+                  <option value="Purchase">Purchase</option>
+                  <option value="Payment">Payment</option>
+                  <option value="Receipt">Receipt</option>
+                  <option value="Contra">Contra</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div className="col-md-5">
+                <label className="form-label">Reference Number</label>
+                <input className="form-control" value={formData.referenceNumber} onChange={(e) => setFormData((c) => ({ ...c, referenceNumber: e.target.value }))} placeholder="e.g. INV-001" />
+              </div>
+              <div className="col-12">
+                <label className="form-label">Remarks</label>
+                <textarea className="form-control" rows="2" value={formData.remarks} onChange={(e) => setFormData((c) => ({ ...c, remarks: e.target.value }))} placeholder="Brief description of the entry..." />
+              </div>
+            </div>
+
+            <div className="form-section-title">Accounting Line Items</div>
+            <div className="table-responsive border-0 mb-3">
+              <table className="table table-premium align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th style={{width: '35%'}}>Account</th>
+                    <th style={{width: '15%'}} className="text-end">Debit</th>
+                    <th style={{width: '15%'}} className="text-end">Credit</th>
+                    <th style={{width: '35%'}}>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {formData.lineItems.map((item, index) => (
+                    <tr key={index}>
+                      <td>
+                        <select className="form-select form-select-sm" value={item.account} onChange={(e) => updateLineItem(index, "account", e.target.value)} required>
+                          <option value="">Select account</option>
+                          {accounts.map((account) => (
+                            <option key={account._id} value={account._id}>{account.accountCode} - {account.accountName}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        <input className="form-control form-control-sm text-end font-mono" type="number" min="0" step="0.01" placeholder="0.00"
+                          value={item.debitAmount} onChange={(e) => updateLineItem(index, "debitAmount", e.target.value)} />
+                      </td>
+                      <td>
+                        <input className="form-control form-control-sm text-end font-mono" type="number" min="0" step="0.01" placeholder="0.00"
+                          value={item.creditAmount} onChange={(e) => updateLineItem(index, "creditAmount", e.target.value)} />
+                      </td>
+                      <td>
+                        <input className="form-control form-control-sm" placeholder="Description" value={item.description}
+                          onChange={(e) => updateLineItem(index, "description", e.target.value)} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="d-flex justify-content-between align-items-center mt-2 mb-4">
+              <div className="d-flex gap-2">
+                <button type="button" className="btn btn-sm btn-outline-primary" onClick={addLine}>+ Add Line</button>
+                {formData.lineItems.length > 2 && (
+                  <button type="button" className="btn btn-sm btn-outline-danger"
+                    onClick={() => setFormData((c) => ({ ...c, lineItems: c.lineItems.slice(0, -1) }))}>Remove Last</button>
+                )}
+              </div>
+              <div className="text-end">
+                <div className="summary-row">
+                  <span className="summary-label">Total Debit</span>
+                  <span className="summary-value">{totals.debit.toFixed(2)}</span>
+                </div>
+                <div className="summary-row">
+                  <span className="summary-label">Total Credit</span>
+                  <span className="summary-value">{totals.credit.toFixed(2)}</span>
+                </div>
+                <div className={`summary-row total ${Math.abs(totals.debit - totals.credit) < 0.01 ? '' : 'text-danger'}`}>
+                  <span className="summary-label">Difference</span>
+                  <span className="summary-value" style={{color: Math.abs(totals.debit - totals.credit) < 0.01 ? '#059669' : '#dc2626'}}>
+                    {Math.abs(totals.debit - totals.credit).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="d-flex gap-2 pt-3 border-top">
+              <button className="btn btn-primary" disabled={submitting}>
+                {submitting ? <><span className="spinner-border spinner-border-sm me-2" role="status"></span>Saving...</> : "Update Journal Entry"}
+              </button>
+              <Link className="btn btn-outline-secondary" to="/journal-entries">Cancel</Link>
+            </div>
+          </form>
+        )}
+      </div>
+    </MainLayout>
+  );
+}
+
+export default EditJournalEntryPage;

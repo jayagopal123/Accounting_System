@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import { useAuth } from "../../contexts/AuthContext";
 import { cancelSalesInvoice, getSalesInvoices, submitSalesInvoice } from "../../services/salesInvoiceApi";
-import { BsFileText, BsCheckLg, BsXLg } from "react-icons/bs";
+import { BsFileText, BsCheckLg, BsXLg, BsPencilSquare } from "react-icons/bs";
 
 function SalesInvoiceListPage() {
   const { hasPermission } = useAuth();
@@ -12,7 +12,10 @@ function SalesInvoiceListPage() {
   const canCancel = hasPermission("sales_invoices:cancel");
 
   const [invoices, setInvoices] = useState([]);
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -34,10 +37,34 @@ function SalesInvoiceListPage() {
     loadInvoices();
   }, []);
 
-  const filteredInvoices = useMemo(
-    () => invoices.filter((invoice) => (statusFilter ? invoice.status === statusFilter : true)),
-    [invoices, statusFilter]
-  );
+  const filteredInvoices = useMemo(() => {
+    let result = invoices;
+    if (statusFilter) {
+      result = result.filter((invoice) => invoice.status === statusFilter);
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (invoice) =>
+          invoice.invoiceNumber?.toLowerCase().includes(q) ||
+          invoice.customer?.customerName?.toLowerCase().includes(q) ||
+          (typeof invoice.customer === 'string' && invoice.customer.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [invoices, statusFilter, search]);
+
+  const paginatedInvoices = useMemo(() => {
+    const itemsPerPage = 10;
+    const start = (page - 1) * itemsPerPage;
+    return filteredInvoices.slice(start, start + itemsPerPage);
+  }, [filteredInvoices, page]);
+
+  useEffect(() => {
+    const itemsPerPage = 10;
+    setTotalPages(Math.max(1, Math.ceil(filteredInvoices.length / itemsPerPage)));
+    setPage(1);
+  }, [filteredInvoices]);
 
   const handleAction = async (action) => {
     try {
@@ -48,7 +75,9 @@ function SalesInvoiceListPage() {
     }
   };
 
-  const colSpan = 5 + (canSubmit || canCancel ? 1 : 0);
+  const canEdit = hasPermission("sales_invoices:update");
+  const hasActions = canEdit || canSubmit || canCancel;
+  const colSpan = 5 + (hasActions ? 1 : 0);
 
   return (
     <MainLayout>
@@ -66,6 +95,9 @@ function SalesInvoiceListPage() {
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
         <div className="row g-3 mb-3">
+          <div className="col-md-4">
+            <input className="form-control" placeholder="Search by invoice number or customer..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
           <div className="col-md-3">
             <select className="form-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="">All Statuses</option>
@@ -84,7 +116,7 @@ function SalesInvoiceListPage() {
                 <th>Customer</th>
                 <th className="text-end">Grand Total</th>
                 <th>Status</th>
-                {canSubmit || canCancel ? <th className="text-end">Actions</th> : null}
+                {hasActions ? <th className="text-end">Actions</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -103,16 +135,21 @@ function SalesInvoiceListPage() {
                     <div className="text-muted small">Create a new sales invoice to get started.</div>
                   </div>
                 </td></tr>
-              ) : filteredInvoices.map((invoice) => (
+              ) : paginatedInvoices.map((invoice) => (
                 <tr key={invoice._id}>
                   <td className="fw-semibold font-mono">{invoice.invoiceNumber}</td>
                   <td className="text-muted">{new Date(invoice.invoiceDate).toLocaleDateString()}</td>
                   <td className="fw-medium">{invoice.customer?.customerName || invoice.customer}</td>
                   <td className="font-mono fw-semibold text-end">{Number(invoice.grandTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                   <td><span className={`badge-premium ${invoice.status === "Draft" ? "badge-premium-draft" : invoice.status === "Submitted" ? "badge-premium-submitted" : "badge-premium-cancelled"}`}>{invoice.status}</span></td>
-                  {canSubmit || canCancel ? (
+                  {hasActions ? (
                     <td className="text-end">
                       <div className="d-flex gap-1 justify-content-end">
+                        {invoice.status === "Draft" && canEdit && (
+                          <Link className="btn btn-sm btn-outline-secondary" to={`/sales-invoices/${invoice._id}/edit`} title="Edit">
+                            <BsPencilSquare size={13} />
+                          </Link>
+                        )}
                         {canSubmit && invoice.status === "Draft" ? (
                           <button className="btn btn-sm btn-outline-success" onClick={() => handleAction(() => submitSalesInvoice(invoice._id))} title="Submit">
                             <BsCheckLg size={13} />
@@ -130,6 +167,11 @@ function SalesInvoiceListPage() {
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+          <button className="btn btn-sm btn-outline-secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</button>
+          <span className="text-muted small font-mono">Page {page} of {totalPages}</span>
+          <button className="btn btn-sm btn-outline-secondary" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</button>
         </div>
       </div>
     </MainLayout>

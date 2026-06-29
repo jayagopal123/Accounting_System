@@ -16,7 +16,9 @@ function EditSupplierPage() {
   }, [hasPermission, navigate]);
 
   const [formData, setFormData] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     const loadSupplier = async () => {
@@ -41,11 +43,16 @@ function EditSupplierPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
+      setSubmitting(true);
+      setError("");
       await updateSupplier(id, formData);
-      navigate("/suppliers");
+      setSuccess(true);
+      setTimeout(() => navigate("/suppliers"), 800);
     } catch (err) {
       const msg = String(err);
       if (!msg.includes("Access denied")) setError(msg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -60,6 +67,11 @@ function EditSupplierPage() {
           <Link className="btn btn-outline-secondary" to="/suppliers">← Back</Link>
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
+        {success && (
+          <div className="alert alert-success d-flex align-items-center gap-2 mb-3" style={{ fontSize: "0.8rem", backgroundColor: "#ecfdf5", color: "#065f46", border: "none" }}>
+            <span>Supplier updated successfully. Redirecting...</span>
+          </div>
+        )}
         {!formData ? (
           <div className="d-flex align-items-center gap-2 py-4">
             <div className="spinner-border spinner-border-sm text-secondary" role="status" />
@@ -116,7 +128,7 @@ function EditSupplierPage() {
             </div>
 
             <div className="d-flex gap-2 pt-3 border-top">
-              <button className="btn btn-primary">Update Supplier</button>
+              <button className="btn btn-primary" disabled={submitting}>{submitting ? <><span className="spinner-border spinner-border-sm me-2" role="status"></span>Saving...</> : "Update Supplier"}</button>
               <Link className="btn btn-outline-secondary" to="/suppliers">Cancel</Link>
             </div>
           </form>

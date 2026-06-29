@@ -18,7 +18,9 @@ function EditAccountPage() {
     description: "",
   });
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -56,6 +58,8 @@ function EditAccountPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
+      setSubmitting(true);
+      setError("");
       const payload = {
         ...formData,
         parentAccount: formData.parentAccount || null,
@@ -66,9 +70,12 @@ function EditAccountPage() {
       }
 
       await updateAccount(id, payload);
-      navigate("/accounts");
+      setSuccess(true);
+      setTimeout(() => navigate("/accounts"), 800);
     } catch (err) {
       setError(String(err));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -83,6 +90,11 @@ function EditAccountPage() {
           <Link className="btn btn-outline-secondary" to="/accounts">← Back</Link>
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
+        {success && (
+          <div className="alert alert-success d-flex align-items-center gap-2 mb-3" style={{ fontSize: "0.8rem", backgroundColor: "#ecfdf5", color: "#065f46", border: "none" }}>
+            <span>Account updated successfully. Redirecting...</span>
+          </div>
+        )}
         {loading ? (
           <div className="d-flex align-items-center gap-2 py-4">
             <div className="spinner-border spinner-border-sm text-secondary" role="status" />
@@ -163,7 +175,7 @@ function EditAccountPage() {
             </div>
 
             <div className="d-flex gap-2 pt-3 border-top">
-              <button className="btn btn-primary">Update Account</button>
+              <button className="btn btn-primary" disabled={submitting}>{submitting ? <><span className="spinner-border spinner-border-sm me-2" role="status"></span>Saving...</> : "Update Account"}</button>
               <Link className="btn btn-outline-secondary" to="/accounts">Cancel</Link>
             </div>
           </form>

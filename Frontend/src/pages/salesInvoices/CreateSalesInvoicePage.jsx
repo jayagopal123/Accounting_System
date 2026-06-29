@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import { useAuth } from "../../contexts/AuthContext";
 import { createSalesInvoice } from "../../services/salesInvoiceApi";
+import { getCustomers } from "../../services/customerApi";
 
 function CreateSalesInvoicePage() {
   const navigate = useNavigate();
@@ -14,13 +15,31 @@ function CreateSalesInvoicePage() {
     }
   }, [hasPermission, navigate]);
 
+  const [customers, setCustomers] = useState([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
     customer: "",
     invoiceDate: new Date().toISOString().slice(0, 10),
     remarks: "",
     items: [{ itemName: "", quantity: 1, rate: 0, amount: 0 }],
   });
+
+  useEffect(() => {
+    const loadCustomers = async () => {
+      try {
+        const response = await getCustomers({ limit: 100 });
+        setCustomers(response.data.data.customers || response.data.data || []);
+      } catch {
+        setCustomers([]);
+      } finally {
+        setLoadingCustomers(false);
+      }
+    };
+    loadCustomers();
+  }, []);
 
   const totals = useMemo(() => {
     const subtotal = formData.items.reduce((sum, item) => sum + Number(item.quantity) * Number(item.rate), 0);
@@ -42,11 +61,16 @@ function CreateSalesInvoicePage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
+      setSubmitting(true);
+      setError("");
       await createSalesInvoice(formData);
-      navigate("/sales-invoices");
+      setSuccess(true);
+      setTimeout(() => navigate("/sales-invoices"), 800);
     } catch (err) {
       const msg = String(err);
       if (!msg.includes("Access denied")) setError(msg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -61,11 +85,26 @@ function CreateSalesInvoicePage() {
           <Link className="btn btn-outline-secondary" to="/sales-invoices">← Back</Link>
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
+        {success && (
+          <div className="alert alert-success d-flex align-items-center gap-2 mb-3" style={{ fontSize: "0.8rem", backgroundColor: "#ecfdf5", color: "#065f46", border: "none" }}>
+            <span>Sales invoice created successfully. Redirecting...</span>
+          </div>
+        )}
         {hasPermission("sales_invoices:create") && (
         <form onSubmit={handleSubmit}>
           <div className="form-section-title">Invoice Details</div>
           <div className="row g-3 mb-4">
-            <div className="col-md-6"><label className="form-label">Customer ID</label><input className="form-control font-mono" value={formData.customer} onChange={(e) => setFormData((c) => ({ ...c, customer: e.target.value }))} required placeholder="Enter customer ID" /></div>
+            <div className="col-md-6">
+              <label className="form-label">Customer</label>
+              <select className="form-select" value={formData.customer} onChange={(e) => setFormData((c) => ({ ...c, customer: e.target.value }))} required>
+                <option value="">{loadingCustomers ? "Loading customers..." : "Select customer"}</option>
+                {customers.map((customer) => (
+                  <option key={customer._id} value={customer._id}>
+                    {customer.customerCode} - {customer.customerName}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="col-md-6"><label className="form-label">Invoice Date</label><input className="form-control" type="date" value={formData.invoiceDate} onChange={(e) => setFormData((c) => ({ ...c, invoiceDate: e.target.value }))} /></div>
             <div className="col-12"><label className="form-label">Remarks</label><textarea className="form-control" rows="2" value={formData.remarks} onChange={(e) => setFormData((c) => ({ ...c, remarks: e.target.value }))} placeholder="Optional notes..." /></div>
           </div>
@@ -113,7 +152,7 @@ function CreateSalesInvoicePage() {
           </div>
 
           <div className="d-flex gap-2 pt-3 border-top mt-3">
-            <button className="btn btn-primary">Save Sales Invoice</button>
+            <button className="btn btn-primary" disabled={submitting}>{submitting ? <><span className="spinner-border spinner-border-sm me-2" role="status"></span>Saving...</> : "Save Sales Invoice"}</button>
             <Link className="btn btn-outline-secondary" to="/sales-invoices">Cancel</Link>
           </div>
         </form>

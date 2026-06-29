@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import { useAuth } from "../../contexts/AuthContext";
 import { createPurchaseInvoice } from "../../services/purchaseInvoiceApi";
+import { getSuppliers } from "../../services/supplierApi";
 
 function CreatePurchaseInvoicePage() {
   const navigate = useNavigate();
@@ -14,13 +15,31 @@ function CreatePurchaseInvoicePage() {
     }
   }, [hasPermission, navigate]);
 
+  const [suppliers, setSuppliers] = useState([]);
+  const [loadingSuppliers, setLoadingSuppliers] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
     supplier: "",
     invoiceDate: new Date().toISOString().slice(0, 10),
     remarks: "",
     items: [{ itemName: "", quantity: 1, rate: 0, amount: 0 }],
   });
+
+  useEffect(() => {
+    const loadSuppliers = async () => {
+      try {
+        const response = await getSuppliers({ limit: 100 });
+        setSuppliers(response.data.data.suppliers || response.data.data || []);
+      } catch {
+        setSuppliers([]);
+      } finally {
+        setLoadingSuppliers(false);
+      }
+    };
+    loadSuppliers();
+  }, []);
 
   const totals = useMemo(() => {
     const subtotal = formData.items.reduce((sum, item) => sum + Number(item.quantity) * Number(item.rate), 0);
@@ -42,11 +61,16 @@ function CreatePurchaseInvoicePage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
+      setSubmitting(true);
+      setError("");
       await createPurchaseInvoice(formData);
-      navigate("/purchase-invoices");
+      setSuccess(true);
+      setTimeout(() => navigate("/purchase-invoices"), 800);
     } catch (err) {
       const msg = String(err);
       if (!msg.includes("Access denied")) setError(msg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -61,11 +85,26 @@ function CreatePurchaseInvoicePage() {
           <Link className="btn btn-outline-secondary" to="/purchase-invoices">← Back</Link>
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
+        {success && (
+          <div className="alert alert-success d-flex align-items-center gap-2 mb-3" style={{ fontSize: "0.8rem", backgroundColor: "#ecfdf5", color: "#065f46", border: "none" }}>
+            <span>Purchase invoice created successfully. Redirecting...</span>
+          </div>
+        )}
         {hasPermission("purchase_invoices:create") && (
         <form onSubmit={handleSubmit}>
           <div className="form-section-title">Invoice Details</div>
           <div className="row g-3 mb-4">
-            <div className="col-md-6"><label className="form-label">Supplier ID</label><input className="form-control font-mono" value={formData.supplier} onChange={(e) => setFormData((c) => ({ ...c, supplier: e.target.value }))} required placeholder="Enter supplier ID" /></div>
+            <div className="col-md-6">
+              <label className="form-label">Supplier</label>
+              <select className="form-select" value={formData.supplier} onChange={(e) => setFormData((c) => ({ ...c, supplier: e.target.value }))} required>
+                <option value="">{loadingSuppliers ? "Loading suppliers..." : "Select supplier"}</option>
+                {suppliers.map((supplier) => (
+                  <option key={supplier._id} value={supplier._id}>
+                    {supplier.supplierCode} - {supplier.supplierName}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="col-md-6"><label className="form-label">Invoice Date</label><input className="form-control" type="date" value={formData.invoiceDate} onChange={(e) => setFormData((c) => ({ ...c, invoiceDate: e.target.value }))} /></div>
             <div className="col-12"><label className="form-label">Remarks</label><textarea className="form-control" rows="2" value={formData.remarks} onChange={(e) => setFormData((c) => ({ ...c, remarks: e.target.value }))} placeholder="Optional notes..." /></div>
           </div>
@@ -113,7 +152,7 @@ function CreatePurchaseInvoicePage() {
           </div>
 
           <div className="d-flex gap-2 pt-3 border-top mt-3">
-            <button className="btn btn-primary">Save Purchase Invoice</button>
+            <button className="btn btn-primary" disabled={submitting}>{submitting ? <><span className="spinner-border spinner-border-sm me-2" role="status"></span>Saving...</> : "Save Purchase Invoice"}</button>
             <Link className="btn btn-outline-secondary" to="/purchase-invoices">Cancel</Link>
           </div>
         </form>

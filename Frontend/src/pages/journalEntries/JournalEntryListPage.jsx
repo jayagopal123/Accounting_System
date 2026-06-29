@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import { useAuth } from "../../contexts/AuthContext";
 import { cancelJournalEntry, getJournalEntries, submitJournalEntry } from "../../services/journalEntryApi";
-import { BsFileText, BsCheckLg, BsXLg } from "react-icons/bs";
+import { BsFileText, BsCheckLg, BsXLg, BsPencilSquare } from "react-icons/bs";
 
 function JournalEntryListPage() {
   const { hasPermission } = useAuth();
@@ -12,7 +12,10 @@ function JournalEntryListPage() {
   const canCancel = hasPermission("journal_entries:cancel");
 
   const [entries, setEntries] = useState([]);
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -34,10 +37,34 @@ function JournalEntryListPage() {
     loadEntries();
   }, []);
 
-  const filteredEntries = useMemo(
-    () => entries.filter((entry) => (statusFilter ? entry.status === statusFilter : true)),
-    [entries, statusFilter]
-  );
+  const filteredEntries = useMemo(() => {
+    let result = entries;
+    if (statusFilter) {
+      result = result.filter((entry) => entry.status === statusFilter);
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (entry) =>
+          entry.voucherNumber?.toLowerCase().includes(q) ||
+          entry.remarks?.toLowerCase().includes(q) ||
+          entry.referenceNumber?.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [entries, statusFilter, search]);
+
+  const paginatedEntries = useMemo(() => {
+    const itemsPerPage = 10;
+    const start = (page - 1) * itemsPerPage;
+    return filteredEntries.slice(start, start + itemsPerPage);
+  }, [filteredEntries, page]);
+
+  useEffect(() => {
+    const itemsPerPage = 10;
+    setTotalPages(Math.max(1, Math.ceil(filteredEntries.length / itemsPerPage)));
+    setPage(1);
+  }, [filteredEntries]);
 
   const handleAction = async (action) => {
     try {
@@ -48,7 +75,9 @@ function JournalEntryListPage() {
     }
   };
 
-  const colSpan = 6 + (canSubmit || canCancel ? 1 : 0);
+  const canEdit = hasPermission("journal_entries:update");
+  const hasActions = canEdit || canSubmit || canCancel;
+  const colSpan = 6 + (hasActions ? 1 : 0);
 
   return (
     <MainLayout>
@@ -66,6 +95,9 @@ function JournalEntryListPage() {
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
         <div className="row g-3 mb-3">
+          <div className="col-md-4">
+            <input className="form-control" placeholder="Search by voucher number or remarks..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
           <div className="col-md-3">
             <select className="form-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="">All Statuses</option>
@@ -85,7 +117,7 @@ function JournalEntryListPage() {
                 <th className="text-end">Total Debit</th>
                 <th className="text-end">Total Credit</th>
                 <th>Status</th>
-                {canSubmit || canCancel ? <th className="text-end">Actions</th> : null}
+                {hasActions ? <th className="text-end">Actions</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -104,7 +136,7 @@ function JournalEntryListPage() {
                     <div className="text-muted small">Create a new journal entry to get started.</div>
                   </div>
                 </td></tr>
-              ) : filteredEntries.map((entry) => (
+              ) : paginatedEntries.map((entry) => (
                 <tr key={entry._id}>
                   <td className="fw-semibold font-mono">{entry.voucherNumber}</td>
                   <td className="text-muted">{new Date(entry.date).toLocaleDateString()}</td>
@@ -112,9 +144,14 @@ function JournalEntryListPage() {
                   <td className="font-mono fw-semibold text-end">{Number(entry.totalDebit).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                   <td className="font-mono fw-semibold text-end">{Number(entry.totalCredit).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                   <td><span className={`badge-premium ${entry.status === "Draft" ? "badge-premium-draft" : entry.status === "Submitted" ? "badge-premium-submitted" : "badge-premium-cancelled"}`}>{entry.status}</span></td>
-                  {canSubmit || canCancel ? (
+                  {hasActions ? (
                     <td className="text-end">
                       <div className="d-flex gap-1 justify-content-end">
+                        {entry.status === "Draft" && canEdit && (
+                          <Link className="btn btn-sm btn-outline-secondary" to={`/journal-entries/${entry._id}/edit`} title="Edit">
+                            <BsPencilSquare size={13} />
+                          </Link>
+                        )}
                         {canSubmit && entry.status === "Draft" ? (
                           <button className="btn btn-sm btn-outline-success" onClick={() => handleAction(() => submitJournalEntry(entry._id))} title="Submit">
                             <BsCheckLg size={13} />
@@ -132,6 +169,11 @@ function JournalEntryListPage() {
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+          <button className="btn btn-sm btn-outline-secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</button>
+          <span className="text-muted small font-mono">Page {page} of {totalPages}</span>
+          <button className="btn btn-sm btn-outline-secondary" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</button>
         </div>
       </div>
     </MainLayout>

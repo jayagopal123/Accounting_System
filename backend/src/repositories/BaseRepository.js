@@ -43,6 +43,10 @@ class BaseRepository {
     return query.exec();
   }
 
+  async findAll() {
+    return this.model.find();
+  }
+
   async find(filter = {}, populateOptions = null) {
     let query = this.model.find(filter);
 

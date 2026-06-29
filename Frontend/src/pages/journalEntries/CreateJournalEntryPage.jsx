@@ -16,7 +16,9 @@ function CreateJournalEntryPage() {
   }, [hasPermission, navigate]);
 
   const [accounts, setAccounts] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().slice(0, 10),
     referenceType: "",
@@ -69,11 +71,16 @@ function CreateJournalEntryPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
+      setSubmitting(true);
+      setError("");
       await createJournalEntry(formData);
-      navigate("/journal-entries");
+      setSuccess(true);
+      setTimeout(() => navigate("/journal-entries"), 800);
     } catch (err) {
       const msg = String(err);
       if (!msg.includes("Access denied")) setError(msg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -88,6 +95,11 @@ function CreateJournalEntryPage() {
           <Link className="btn btn-outline-secondary" to="/journal-entries">← Back</Link>
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
+        {success && (
+          <div className="alert alert-success d-flex align-items-center gap-2 mb-3" style={{ fontSize: "0.8rem", backgroundColor: "#ecfdf5", color: "#065f46", border: "none" }}>
+            <span>Journal entry created successfully. Redirecting...</span>
+          </div>
+        )}
         {hasPermission("journal_entries:create") && (
         <form onSubmit={handleSubmit}>
           <div className="form-section-title">Voucher Details</div>
@@ -165,7 +177,7 @@ function CreateJournalEntryPage() {
           </div>
 
           <div className="d-flex gap-2 pt-3 border-top">
-            <button className="btn btn-primary">Save Journal Entry</button>
+            <button className="btn btn-primary" disabled={submitting}>{submitting ? <><span className="spinner-border spinner-border-sm me-2" role="status"></span>Saving...</> : "Save Journal Entry"}</button>
             <Link className="btn btn-outline-secondary" to="/journal-entries">Cancel</Link>
           </div>
         </form>

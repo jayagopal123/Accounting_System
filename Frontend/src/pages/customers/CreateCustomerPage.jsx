@@ -36,22 +36,29 @@ function CreateCustomerPage() {
     }
   }, [hasPermission, navigate]);
 
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState(initialForm);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   const updateField = (name, value) => setFormData((current) => ({ ...current, [name]: value }));
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
+      setSubmitting(true);
+      setError("");
       await createCustomer({
         ...formData,
         tags: formData.tags.filter(Boolean),
       });
-      navigate("/customers");
+      setSuccess(true);
+      setTimeout(() => navigate("/customers"), 800);
     } catch (err) {
       const msg = String(err);
       if (!msg.includes("Access denied")) setError(msg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -66,6 +73,11 @@ function CreateCustomerPage() {
           <Link className="btn btn-outline-secondary" to="/customers">← Back</Link>
         </div>
         {error ? <div className="alert alert-danger">{error}</div> : null}
+        {success && (
+          <div className="alert alert-success d-flex align-items-center gap-2 mb-3" style={{ fontSize: "0.8rem", backgroundColor: "#ecfdf5", color: "#065f46", border: "none" }}>
+            <span>Customer created successfully. Redirecting...</span>
+          </div>
+        )}
         {hasPermission("customers:create") && (
         <form onSubmit={handleSubmit}>
           <div className="form-section-title">Basic Information</div>
@@ -117,7 +129,7 @@ function CreateCustomerPage() {
           </div>
 
           <div className="d-flex gap-2 pt-3 border-top">
-            <button className="btn btn-primary">Save Customer</button>
+            <button className="btn btn-primary" disabled={submitting}>{submitting ? <><span className="spinner-border spinner-border-sm me-2" role="status"></span>Saving...</> : "Save Customer"}</button>
             <Link className="btn btn-outline-secondary" to="/customers">Cancel</Link>
           </div>
         </form>

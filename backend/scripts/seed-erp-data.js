@@ -1,0 +1,981 @@
+/**
+ * ERP Data Seeding Script
+ * ========================
+ * Populates the local MongoDB database with realistic, fully-related ERP data
+ * including Chart of Accounts, Users, Roles, Customers, Suppliers,
+ * Journal Entries, Sales Invoices, and Purchase Invoices.
+ *
+ * All references, validations, and business rules are preserved:
+ *   - Account parent/child hierarchy with type matching
+ *   - Balanced journal entries (totalDebit === totalCredit)
+ *   - Invoice auto-calculations (amount, subtotal, tax, grandTotal)
+ *   - Proper ObjectId references across all documents
+ *
+ * Usage: node scripts/seed-erp-data.js
+ */
+
+import mongoose from "mongoose";
+import env from "../src/config/env.js";
+
+// ==========================================================================
+// Models
+// ==========================================================================
+import Permission from "../src/models/Permission.js";
+import Role from "../src/models/Role.js";
+import User from "../src/models/User.js";
+import Account from "../src/models/Account.js";
+import Customer from "../src/models/Customer.js";
+import Supplier from "../src/models/Supplier.js";
+import JournalEntry from "../src/models/JournalEntry.js";
+import SalesInvoice from "../src/models/SalesInvoice.js";
+import PurchaseInvoice from "../src/models/PurchaseInvoice.js";
+
+// ==========================================================================
+// Seed Data Definitions
+// ==========================================================================
+
+// --- Permissions (same as existing seed.js) ---
+const PERMISSIONS = [
+  { name: "customers:create", module: "customers", description: "Allows creating customer records" },
+  { name: "customers:view", module: "customers", description: "Allows viewing customer records" },
+  { name: "customers:update", module: "customers", description: "Allows modifying customer records" },
+  { name: "customers:delete", module: "customers", description: "Allows deleting customer records" },
+  { name: "suppliers:create", module: "suppliers", description: "Allows creating supplier records" },
+  { name: "suppliers:view", module: "suppliers", description: "Allows viewing supplier records" },
+  { name: "suppliers:update", module: "suppliers", description: "Allows modifying supplier records" },
+  { name: "suppliers:delete", module: "suppliers", description: "Allows deleting supplier records" },
+  { name: "journal_entries:create", module: "accounting", description: "Allows creating journal entries" },
+  { name: "journal_entries:view", module: "accounting", description: "Allows viewing journal entries" },
+  { name: "journal_entries:update", module: "accounting", description: "Allows modifying journal entries" },
+  { name: "journal_entries:submit", module: "accounting", description: "Allows submitting journal entries" },
+  { name: "journal_entries:cancel", module: "accounting", description: "Allows cancelling journal entries" },
+  { name: "sales_invoices:create", module: "accounting", description: "Allows creating sales invoices" },
+  { name: "sales_invoices:view", module: "accounting", description: "Allows viewing sales invoices" },
+  { name: "sales_invoices:update", module: "accounting", description: "Allows modifying sales invoices" },
+  { name: "sales_invoices:submit", module: "accounting", description: "Allows submitting sales invoices" },
+  { name: "sales_invoices:cancel", module: "accounting", description: "Allows cancelling sales invoices" },
+  { name: "purchase_invoices:create", module: "accounting", description: "Allows creating purchase invoices" },
+  { name: "purchase_invoices:view", module: "accounting", description: "Allows viewing purchase invoices" },
+  { name: "purchase_invoices:update", module: "accounting", description: "Allows modifying purchase invoices" },
+  { name: "purchase_invoices:submit", module: "accounting", description: "Allows submitting purchase invoices" },
+  { name: "purchase_invoices:cancel", module: "accounting", description: "Allows cancelling purchase invoices" },
+  { name: "roles:create", module: "settings", description: "Allows creating and mapping security roles" },
+  { name: "accounts:create", module: "settings", description: "Allows creating chart of accounts" },
+  { name: "accounts:view", module: "settings", description: "Allows viewing chart of accounts" },
+  { name: "accounts:update", module: "settings", description: "Allows modifying accounts" },
+];
+
+// --- Chart of Accounts (hierarchical) ---
+// Top-level groups are inserted first, then children reference parent _ids.
+// The codes must align with what the services expect:
+//   "1101" = Accounts Receivable
+//   "2001" = Accounts Payable
+//   "4001" = Sales Revenue
+//   "5001" = Purchase Expense
+
+const ACCOUNTS_DATA = [
+  // ===== ASSETS (1000-1999) =====
+  { accountCode: "1000", accountName: "Current Assets", accountType: "ASSET", isGroup: true, level: 1, ancestors: [] },
+  { accountCode: "1100", accountName: "Accounts Receivable", accountType: "ASSET", isGroup: true, level: 2, parentCode: "1000" },
+  { accountCode: "1101", accountName: "Trade Receivables", accountType: "ASSET", isGroup: false, level: 3, parentCode: "1100", amount: 0 },
+  { accountCode: "1200", accountName: "Cash & Bank", accountType: "ASSET", isGroup: true, level: 2, parentCode: "1000" },
+  { accountCode: "1201", accountName: "Cash in Hand", accountType: "ASSET", isGroup: false, level: 3, parentCode: "1200", amount: 500000 },
+  { accountCode: "1202", accountName: "Bank Account - HDFC", accountType: "ASSET", isGroup: false, level: 3, parentCode: "1200", amount: 2500000 },
+  { accountCode: "1300", accountName: "Fixed Assets", accountType: "ASSET", isGroup: true, level: 1, ancestors: [] },
+  { accountCode: "1301", accountName: "Office Equipment", accountType: "ASSET", isGroup: false, level: 2, parentCode: "1300", amount: 750000 },
+  { accountCode: "1302", accountName: "Furniture & Fixtures", accountType: "ASSET", isGroup: false, level: 2, parentCode: "1300", amount: 350000 },
+
+  // ===== LIABILITIES (2000-2999) =====
+  { accountCode: "2000", accountName: "Current Liabilities", accountType: "LIABILITY", isGroup: true, level: 1, ancestors: [] },
+  { accountCode: "2001", accountName: "Accounts Payable", accountType: "LIABILITY", isGroup: false, level: 2, parentCode: "2000", amount: 0 },
+  { accountCode: "2100", accountName: "Tax Liabilities", accountType: "LIABILITY", isGroup: true, level: 2, parentCode: "2000" },
+  { accountCode: "2101", accountName: "GST Payable", accountType: "LIABILITY", isGroup: false, level: 3, parentCode: "2100", amount: 0 },
+  { accountCode: "2200", accountName: "Other Liabilities", accountType: "LIABILITY", isGroup: true, level: 2, parentCode: "2000" },
+  { accountCode: "2201", accountName: "Outstanding Expenses", accountType: "LIABILITY", isGroup: false, level: 3, parentCode: "2200", amount: 0 },
+
+  // ===== EQUITY (3000-3999) =====
+  { accountCode: "3000", accountName: "Owner's Equity", accountType: "EQUITY", isGroup: true, level: 1, ancestors: [] },
+  { accountCode: "3001", accountName: "Capital Account", accountType: "EQUITY", isGroup: false, level: 2, parentCode: "3000", amount: 5000000 },
+  { accountCode: "3002", accountName: "Retained Earnings", accountType: "EQUITY", isGroup: false, level: 2, parentCode: "3000", amount: 1200000 },
+  { accountCode: "3100", accountName: "Drawings", accountType: "EQUITY", isGroup: false, level: 2, parentCode: "3000", amount: 0 },
+
+  // ===== INCOME (4000-4999) =====
+  { accountCode: "4000", accountName: "Revenue", accountType: "INCOME", isGroup: true, level: 1, ancestors: [] },
+  { accountCode: "4001", accountName: "Sales Revenue", accountType: "INCOME", isGroup: false, level: 2, parentCode: "4000", amount: 0 },
+  { accountCode: "4002", accountName: "Service Revenue", accountType: "INCOME", isGroup: false, level: 2, parentCode: "4000", amount: 0 },
+  { accountCode: "4100", accountName: "Other Income", accountType: "INCOME", isGroup: true, level: 2, parentCode: "4000" },
+  { accountCode: "4101", accountName: "Interest Income", accountType: "INCOME", isGroup: false, level: 3, parentCode: "4100", amount: 0 },
+
+  // ===== EXPENSES (5000-5999) =====
+  { accountCode: "5000", accountName: "Direct Expenses", accountType: "EXPENSE", isGroup: true, level: 1, ancestors: [] },
+  { accountCode: "5001", accountName: "Purchase Expenses", accountType: "EXPENSE", isGroup: false, level: 2, parentCode: "5000", amount: 0 },
+  { accountCode: "5002", accountName: "Cost of Goods Sold", accountType: "EXPENSE", isGroup: false, level: 2, parentCode: "5000", amount: 0 },
+  { accountCode: "5100", accountName: "Indirect Expenses", accountType: "EXPENSE", isGroup: true, level: 2, parentCode: "5000" },
+  { accountCode: "5101", accountName: "Salary Expenses", accountType: "EXPENSE", isGroup: false, level: 3, parentCode: "5100", amount: 0 },
+  { accountCode: "5102", accountName: "Rent Expenses", accountType: "EXPENSE", isGroup: false, level: 3, parentCode: "5100", amount: 0 },
+  { accountCode: "5103", accountName: "Utilities Expenses", accountType: "EXPENSE", isGroup: false, level: 3, parentCode: "5100", amount: 0 },
+  { accountCode: "5104", accountName: "Office Supplies", accountType: "EXPENSE", isGroup: false, level: 3, parentCode: "5100", amount: 0 },
+];
+
+// --- Customers ---
+const CUSTOMERS_DATA = [
+  {
+    customerCode: "CUST-001",
+    customerName: "TechVision Solutions Pvt Ltd",
+    customerGroup: "Corporate",
+    customerType: "Company",
+    territory: "South",
+    defaultCurrency: "INR",
+    company: "TechVision Solutions",
+    gstNumber: "29AABCT1234E1Z5",
+    panNumber: "AABCT1234E",
+    taxCategory: "Registered",
+    creditLimit: 500000,
+    openingBalance: 0,
+    paymentTerms: "30 Days",
+    creditDays: 30,
+    allowCreditSales: true,
+    addresses: [
+      { addressType: "Billing", addressLine1: "42, Tech Park, Electronic City", city: "Bangalore", state: "Karnataka", country: "India", postalCode: "560100" },
+      { addressType: "Shipping", addressLine1: "Unit 5, Industrial Layout", city: "Bangalore", state: "Karnataka", country: "India", postalCode: "560048" },
+    ],
+    contacts: [
+      { contactPerson: "Ravi Kumar", phone: "080-41234567", mobile: "+91-9876543210", email: "ravi.kumar@techvision.com" },
+    ],
+    remarks: "Key corporate client - preferred pricing",
+    tags: ["corporate", "preferred", "south"],
+    status: "Active",
+  },
+  {
+    customerCode: "CUST-002",
+    customerName: "GreenLeaf Retail Chain",
+    customerGroup: "Retail",
+    customerType: "Company",
+    territory: "West",
+    defaultCurrency: "INR",
+    company: "GreenLeaf Retail",
+    gstNumber: "27BGLRC5678H1Z9",
+    panNumber: "BGLRC5678H",
+    taxCategory: "Registered",
+    creditLimit: 250000,
+    openingBalance: 15000,
+    paymentTerms: "15 Days",
+    creditDays: 15,
+    allowCreditSales: true,
+    addresses: [
+      { addressType: "Billing", addressLine1: "7, Commerce House, CG Road", city: "Ahmedabad", state: "Gujarat", country: "India", postalCode: "380009" },
+    ],
+    contacts: [
+      { contactPerson: "Priya Sharma", mobile: "+91-9876501234", email: "priya@greenleaf.in" },
+    ],
+    remarks: "Monthly billing cycle",
+    tags: ["retail", "monthly"],
+    status: "Active",
+  },
+  {
+    customerCode: "CUST-003",
+    customerName: "Northern Hardware & Tools",
+    customerGroup: "Wholesale",
+    customerType: "Company",
+    territory: "North",
+    defaultCurrency: "INR",
+    company: "Northern Hardware",
+    gstNumber: "07NHRT9012K1Z1",
+    panNumber: "NHRT9012K",
+    taxCategory: "Registered",
+    creditLimit: 1000000,
+    openingBalance: 0,
+    paymentTerms: "45 Days",
+    creditDays: 45,
+    allowCreditSales: true,
+    addresses: [
+      { addressType: "Billing", addressLine1: "88, Industrial Area Phase 2", city: "Delhi", state: "Delhi", country: "India", postalCode: "110020" },
+      { addressType: "Shipping", addressLine1: "Warehouse 12, Transport Nagar", city: "Ghaziabad", state: "Uttar Pradesh", country: "India", postalCode: "201001" },
+    ],
+    contacts: [
+      { contactPerson: "Amit Singh", phone: "011-23456789", mobile: "+91-9999012345", email: "amit@northernhardware.in" },
+    ],
+    remarks: "High volume wholesale buyer",
+    tags: ["wholesale", "high-value"],
+    status: "Active",
+  },
+  {
+    customerCode: "CUST-004",
+    customerName: "Eastern Exports Limited",
+    customerGroup: "Corporate",
+    customerType: "Company",
+    territory: "East",
+    defaultCurrency: "INR",
+    company: "Eastern Exports",
+    gstNumber: "19EELX3456P1Z2",
+    panNumber: "EELX3456P",
+    taxCategory: "Registered",
+    creditLimit: 750000,
+    openingBalance: 45000,
+    paymentTerms: "30 Days",
+    creditDays: 30,
+    allowCreditSales: true,
+    addresses: [
+      { addressType: "Billing", addressLine1: "15, Dockyard Road", city: "Kolkata", state: "West Bengal", country: "India", postalCode: "700001" },
+    ],
+    contacts: [
+      { contactPerson: "Sudipta Banerjee", mobile: "+91-9830012345", email: "sudipta@eastern-exports.com" },
+    ],
+    remarks: "Export-oriented client - SEZ benefits",
+    tags: ["exports", "corporate"],
+    status: "Active",
+  },
+  {
+    customerCode: "CUST-005",
+    customerName: "Samir Patel (Individual Buyer)",
+    customerGroup: "General",
+    customerType: "Individual",
+    territory: "West",
+    defaultCurrency: "INR",
+    creditLimit: 50000,
+    openingBalance: 0,
+    paymentTerms: "Cash on Delivery",
+    creditDays: 0,
+    allowCreditSales: false,
+    addresses: [
+      { addressType: "Billing", addressLine1: "B-201, Sunshine Apartments", city: "Mumbai", state: "Maharashtra", country: "India", postalCode: "400001" },
+    ],
+    contacts: [
+      { contactPerson: "Samir Patel", mobile: "+91-9988776655", email: "samir.patel@gmail.com" },
+    ],
+    tags: ["individual", "retail"],
+    status: "Active",
+  },
+];
+
+// --- Suppliers ---
+const SUPPLIERS_DATA = [
+  {
+    supplierCode: "SUPP-001",
+    supplierName: "Global Industrial Supplies Ltd",
+    supplierGroup: "Industrial",
+    supplierType: "Company",
+    territory: "West",
+    defaultCurrency: "INR",
+    company: "Global Industrial",
+    gstNumber: "27GISL7890K1Z8",
+    panNumber: "GISL7890K",
+    taxCategory: "Registered",
+    creditLimit: 2000000,
+    openingBalance: 0,
+    paymentTerms: "60 Days",
+    creditDays: 60,
+    allowCreditPurchase: true,
+    addresses: [
+      { addressType: "Billing", addressLine1: "Plaza Business Centre, Andheri East", city: "Mumbai", state: "Maharashtra", country: "India", postalCode: "400093" },
+    ],
+    contacts: [
+      { contactPerson: "Vikram Mehta", phone: "022-67890123", mobile: "+91-9820098200", email: "vikram@globalindustrial.com" },
+    ],
+    remarks: "Primary raw material supplier",
+    tags: ["raw-materials", "industrial"],
+    status: "Active",
+  },
+  {
+    supplierCode: "SUPP-002",
+    supplierName: "OfficePro Stationers",
+    supplierGroup: "General",
+    supplierType: "Company",
+    territory: "South",
+    defaultCurrency: "INR",
+    company: "OfficePro",
+    gstNumber: "29OPSP4567E1Z4",
+    panNumber: "OPSP4567E",
+    taxCategory: "Registered",
+    creditLimit: 100000,
+    openingBalance: 12000,
+    paymentTerms: "15 Days",
+    creditDays: 15,
+    allowCreditPurchase: true,
+    addresses: [
+      { addressType: "Billing", addressLine1: "12, MG Road, Indiranagar", city: "Bangalore", state: "Karnataka", country: "India", postalCode: "560038" },
+    ],
+    contacts: [
+      { contactPerson: "Mohan Raj", mobile: "+91-9845012345", email: "orders@officepro.in" },
+    ],
+    tags: ["office-supplies", "stationery"],
+    status: "Active",
+  },
+  {
+    supplierCode: "SUPP-003",
+    supplierName: "TechConnect IT Distributors",
+    supplierGroup: "IT Services",
+    supplierType: "Company",
+    territory: "South",
+    defaultCurrency: "INR",
+    company: "TechConnect",
+    gstNumber: "33TCTD8901L1Z6",
+    panNumber: "TCTD8901L",
+    taxCategory: "Registered",
+    creditLimit: 1500000,
+    openingBalance: 0,
+    paymentTerms: "30 Days",
+    creditDays: 30,
+    allowCreditPurchase: true,
+    addresses: [
+      { addressType: "Billing", addressLine1: "Tidel Park, Taramani", city: "Chennai", state: "Tamil Nadu", country: "India", postalCode: "600113" },
+    ],
+    contacts: [
+      { contactPerson: "Srinivasan Iyer", phone: "044-45678901", mobile: "+91-9840098400", email: "srinivas@techconnect.in" },
+    ],
+    remarks: "IT hardware and software provider",
+    tags: ["it-services", "hardware"],
+    status: "Active",
+  },
+  {
+    supplierCode: "SUPP-004",
+    supplierName: "FreshLogistics Courier Services",
+    supplierGroup: "Services",
+    supplierType: "Company",
+    territory: "North",
+    defaultCurrency: "INR",
+    company: "FreshLogistics",
+    gstNumber: "07FLCS1234F1Z7",
+    panNumber: "FLCS1234F",
+    taxCategory: "Registered",
+    creditLimit: 200000,
+    openingBalance: 8500,
+    paymentTerms: "7 Days",
+    creditDays: 7,
+    allowCreditPurchase: true,
+    addresses: [
+      { addressType: "Billing", addressLine1: "Logistics Hub, GT Karnal Road", city: "Delhi", state: "Delhi", country: "India", postalCode: "110033" },
+    ],
+    contacts: [
+      { contactPerson: "Rajesh Khanna", mobile: "+91-9911223344", email: "rajesh@freshlogistics.in" },
+    ],
+    tags: ["logistics", "courier"],
+    status: "Active",
+  },
+  {
+    supplierCode: "SUPP-005",
+    supplierName: "Ananya Traders",
+    supplierGroup: "General",
+    supplierType: "Individual",
+    territory: "East",
+    defaultCurrency: "INR",
+    company: "Ananya Traders",
+    gstNumber: "19ANTR5678H1Z3",
+    panNumber: "ANTR5678H",
+    taxCategory: "Registered",
+    creditLimit: 300000,
+    openingBalance: 0,
+    paymentTerms: "30 Days",
+    creditDays: 30,
+    allowCreditPurchase: true,
+    addresses: [
+      { addressType: "Billing", addressLine1: "55, Old Market Street", city: "Kolkata", state: "West Bengal", country: "India", postalCode: "700007" },
+    ],
+    contacts: [
+      { contactPerson: "Ananya Das", mobile: "+91-9874123650", email: "ananya@ananyatraders.in" },
+    ],
+    tags: ["trading", "general"],
+    status: "Active",
+  },
+];
+
+// ==========================================================================
+// Main Seeding Function
+// ==========================================================================
+
+const seed = async () => {
+  try {
+    // ── Connect ──
+    console.log("Connecting to MongoDB at", env.MONGODB_URI, "...");
+    await mongoose.connect(env.MONGODB_URI);
+    console.log("Connected.\n");
+
+    // ── Clear existing data ──
+    console.log("Clearing existing collections...");
+    await Promise.all([
+      Permission.deleteMany({}),
+      Role.deleteMany({}),
+      User.deleteMany({}),
+      Account.deleteMany({}),
+      Customer.deleteMany({}),
+      Supplier.deleteMany({}),
+      JournalEntry.deleteMany({}),
+      SalesInvoice.deleteMany({}),
+      PurchaseInvoice.deleteMany({}),
+    ]);
+    console.log("All collections cleared.\n");
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 1: Permissions
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 1: Seeding Permissions ---");
+    const seededPermissions = await Permission.insertMany(PERMISSIONS);
+    const permMap = {}; // name -> _id
+    seededPermissions.forEach((p) => {
+      permMap[p.name] = p._id;
+    });
+    console.log(`  Created ${seededPermissions.length} permissions.\n`);
+
+    // Helper to resolve permission IDs from names
+    const getPermIds = (names) => names.map((n) => permMap[n]);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 2: Roles
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 2: Seeding Roles ---");
+
+    const adminRole = await Role.create({
+      name: "SYSTEM_ADMIN",
+      description: "System Administrator with full access to all modules",
+      permissions: seededPermissions.map((p) => p._id),
+    });
+
+    const accountantRole = await Role.create({
+      name: "ACCOUNTANT",
+      description: "Accountant with ledger, invoice, and journal entry access",
+      permissions: getPermIds([
+        "accounts:create", "accounts:view", "accounts:update",
+        "customers:create", "customers:view", "customers:update",
+        "suppliers:create", "suppliers:view", "suppliers:update",
+        "journal_entries:create", "journal_entries:view", "journal_entries:update", "journal_entries:submit",
+        "sales_invoices:create", "sales_invoices:view", "sales_invoices:update", "sales_invoices:submit",
+        "purchase_invoices:create", "purchase_invoices:view", "purchase_invoices:update", "purchase_invoices:submit",
+      ]),
+    });
+
+    const auditorRole = await Role.create({
+      name: "AUDITOR",
+      description: "Read-only access for compliance auditing",
+      permissions: getPermIds([
+        "accounts:view",
+        "customers:view",
+        "suppliers:view",
+        "journal_entries:view",
+        "sales_invoices:view",
+        "purchase_invoices:view",
+      ]),
+    });
+
+    const managerRole = await Role.create({
+      name: "MANAGER",
+      description: "Department manager with approval authority",
+      permissions: getPermIds([
+        "accounts:view",
+        "customers:view", "customers:update",
+        "suppliers:view", "suppliers:update",
+        "journal_entries:view", "journal_entries:submit", "journal_entries:cancel",
+        "sales_invoices:view", "sales_invoices:submit", "sales_invoices:cancel",
+        "purchase_invoices:view", "purchase_invoices:submit", "purchase_invoices:cancel",
+      ]),
+    });
+
+    console.log(`  Created roles: SYSTEM_ADMIN, ACCOUNTANT, AUDITOR, MANAGER.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 3: Users
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 3: Seeding Users ---");
+
+    const adminUser = await User.create({
+      name: "System Admin",
+      email: "admin@company.com",
+      password: "AdminPassword123!",
+      roles: [adminRole._id],
+      status: "active",
+    });
+
+    const accountantUser = await User.create({
+      name: "Arun Kumar",
+      email: "accountant@company.com",
+      password: "Accountant@123",
+      roles: [accountantRole._id],
+      status: "active",
+    });
+
+    const auditorUser = await User.create({
+      name: "Meena Iyer",
+      email: "auditor@company.com",
+      password: "Auditor@123",
+      roles: [auditorRole._id],
+      status: "active",
+    });
+
+    const managerUser = await User.create({
+      name: "Rajesh Sharma",
+      email: "manager@company.com",
+      password: "Manager@123",
+      roles: [managerRole._id],
+      status: "active",
+    });
+
+    const juniorAcctUser = await User.create({
+      name: "Vikram Joshi",
+      email: "jracct@company.com",
+      password: "JrAccount@123",
+      roles: [accountantRole._id],
+      status: "active",
+    });
+
+    console.log("  Created users:");
+    console.log(`    admin@company.com     (SYSTEM_ADMIN)  -> pwd: AdminPassword123!`);
+    console.log(`    accountant@company.com (ACCOUNTANT)   -> pwd: Accountant@123`);
+    console.log(`    auditor@company.com    (AUDITOR)      -> pwd: Auditor@123`);
+    console.log(`    manager@company.com    (MANAGER)      -> pwd: Manager@123`);
+    console.log(`    jracct@company.com     (ACCOUNTANT)   -> pwd: JrAccount@123\n`);
+
+    const adminId = adminUser._id;
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 4: Chart of Accounts (hierarchical)
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 4: Seeding Chart of Accounts ---");
+
+    // Build lookup: accountCode -> account doc (after insert)
+    const accountMap = {};
+
+    // Insert in order so parents are inserted before children
+    for (const accData of ACCOUNTS_DATA) {
+      const doc = {
+        accountCode: accData.accountCode,
+        accountName: accData.accountName,
+        accountType: accData.accountType,
+        isGroup: accData.isGroup,
+        level: accData.level,
+        ancestors: [],
+        currency: "INR",
+        amount: accData.amount || 0,
+        status: "ACTIVE",
+        description: "",
+        createdBy: adminId,
+        updatedBy: adminId,
+      };
+
+      // Resolve parent and ancestors
+      if (accData.parentCode) {
+        const parent = accountMap[accData.parentCode];
+        if (!parent) {
+          throw new Error(`Parent account ${accData.parentCode} not found for ${accData.accountCode}`);
+        }
+        doc.parentAccount = parent._id;
+        doc.ancestors = [...parent.ancestors, parent._id];
+      }
+
+      const created = await Account.create(doc);
+      accountMap[accData.accountCode] = created;
+    }
+
+    console.log(`  Created ${Object.keys(accountMap).length} accounts.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 5: Customers
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 5: Seeding Customers ---");
+    const customerDocs = await Customer.insertMany(CUSTOMERS_DATA);
+    console.log(`  Created ${customerDocs.length} customers.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 6: Suppliers
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 6: Seeding Suppliers ---");
+    const supplierDocs = await Supplier.insertMany(SUPPLIERS_DATA);
+    console.log(`  Created ${supplierDocs.length} suppliers.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 7: Journal Entries
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 7: Seeding Journal Entries ---");
+
+    const ac1101 = accountMap["1101"]._id; // Trade Receivables
+    const ac4001 = accountMap["4001"]._id; // Sales Revenue
+    const ac1201 = accountMap["1201"]._id; // Cash in Hand
+    const ac2001 = accountMap["2001"]._id; // Accounts Payable
+    const ac5001 = accountMap["5001"]._id; // Purchase Expenses
+    const ac5101 = accountMap["5101"]._id; // Salary Expenses
+    const ac5102 = accountMap["5102"]._id; // Rent Expenses
+    const ac5103 = accountMap["5103"]._id; // Utilities Expenses
+    const ac3001 = accountMap["3001"]._id; // Capital Account
+    const ac1202 = accountMap["1202"]._id; // Bank Account
+    const ac2101 = accountMap["2101"]._id; // GST Payable
+    const ac5002 = accountMap["5002"]._id; // COGS
+    const ac4101 = accountMap["4101"]._id; // Interest Income
+
+    const journalEntriesData = [
+      {
+        voucherNumber: "JE-00001",
+        date: new Date("2024-01-01"),
+        referenceType: "Opening Entry",
+        referenceNumber: "OP-001",
+        remarks: "Opening balance entry - Capital contribution",
+        status: "Submitted",
+        totalDebit: 5000000,
+        totalCredit: 5000000,
+        lineItems: [
+          { account: ac1202, debitAmount: 5000000, creditAmount: 0, description: "Capital deposited in bank" },
+          { account: ac3001, debitAmount: 0, creditAmount: 5000000, description: "Owner capital contribution" },
+        ],
+        createdBy: adminId,
+      },
+      {
+        voucherNumber: "JE-00002",
+        date: new Date("2024-01-05"),
+        referenceType: "Purchase",
+        referenceNumber: "PO-2024-001",
+        remarks: "Purchase of office equipment",
+        status: "Submitted",
+        totalDebit: 750000,
+        totalCredit: 750000,
+        lineItems: [
+          { account: accountMap["1301"]._id, debitAmount: 750000, creditAmount: 0, description: "Office equipment purchase" },
+          { account: ac1202, debitAmount: 0, creditAmount: 750000, description: "Payment via bank" },
+        ],
+        createdBy: accountantUser._id,
+      },
+      {
+        voucherNumber: "JE-00003",
+        date: new Date("2024-01-10"),
+        referenceType: "Sales",
+        referenceNumber: "INV-2024-0001",
+        remarks: "Credit sales to TechVision Solutions",
+        status: "Submitted",
+        totalDebit: 236000,
+        totalCredit: 236000,
+        lineItems: [
+          { account: ac1101, debitAmount: 236000, creditAmount: 0, description: "Amount receivable from TechVision" },
+          { account: ac4001, debitAmount: 0, creditAmount: 200000, description: "Sales revenue" },
+          { account: ac2101, debitAmount: 0, creditAmount: 36000, description: "GST @ 18%" },
+        ],
+        createdBy: accountantUser._id,
+      },
+      {
+        voucherNumber: "JE-00004",
+        date: new Date("2024-01-15"),
+        referenceType: "Payment",
+        referenceNumber: "PMT-2024-001",
+        remarks: "Salary payment for January",
+        status: "Submitted",
+        totalDebit: 320000,
+        totalCredit: 320000,
+        lineItems: [
+          { account: ac5101, debitAmount: 320000, creditAmount: 0, description: "January salaries" },
+          { account: ac1202, debitAmount: 0, creditAmount: 320000, description: "Salary paid via bank" },
+        ],
+        createdBy: accountantUser._id,
+      },
+      {
+        voucherNumber: "JE-00005",
+        date: new Date("2024-01-20"),
+        referenceType: "Expense",
+        referenceNumber: "EXP-2024-001",
+        remarks: "Office rent payment for Q1 2024",
+        status: "Submitted",
+        totalDebit: 150000,
+        totalCredit: 150000,
+        lineItems: [
+          { account: ac5102, debitAmount: 150000, creditAmount: 0, description: "Office rent - Quarter 1" },
+          { account: ac1202, debitAmount: 0, creditAmount: 150000, description: "Rent paid via bank" },
+        ],
+        createdBy: accountantUser._id,
+      },
+      {
+        voucherNumber: "JE-00006",
+        date: new Date("2024-02-01"),
+        referenceType: "Purchase",
+        referenceNumber: "PO-2024-002",
+        remarks: "Purchase of raw materials from Global Industrial",
+        status: "Submitted",
+        totalDebit: 590000,
+        totalCredit: 590000,
+        lineItems: [
+          { account: ac5001, debitAmount: 500000, creditAmount: 0, description: "Raw materials purchase" },
+          { account: ac2101, debitAmount: 90000, creditAmount: 0, description: "Input GST credit @ 18%" },
+          { account: ac2001, debitAmount: 0, creditAmount: 590000, description: "Payable to Global Industrial" },
+        ],
+        createdBy: accountantUser._id,
+      },
+      {
+        voucherNumber: "JE-00007",
+        date: new Date("2024-02-05"),
+        referenceType: "Utilities",
+        referenceNumber: "UTL-2024-001",
+        remarks: "Electricity and internet bills for January",
+        status: "Submitted",
+        totalDebit: 45000,
+        totalCredit: 45000,
+        lineItems: [
+          { account: ac5103, debitAmount: 45000, creditAmount: 0, description: "Electricity & internet bills" },
+          { account: ac1202, debitAmount: 0, creditAmount: 45000, description: "Paid via bank" },
+        ],
+        createdBy: juniorAcctUser._id,
+      },
+      {
+        voucherNumber: "JE-00008",
+        date: new Date("2024-02-10"),
+        referenceType: "Sales",
+        referenceNumber: "INV-2024-0003",
+        remarks: "Credit sales to Northern Hardware",
+        status: "Draft",
+        totalDebit: 354000,
+        totalCredit: 354000,
+        lineItems: [
+          { account: ac1101, debitAmount: 354000, creditAmount: 0, description: "Amount receivable" },
+          { account: ac4001, debitAmount: 0, creditAmount: 300000, description: "Sales revenue" },
+          { account: ac2101, debitAmount: 0, creditAmount: 54000, description: "GST @ 18%" },
+        ],
+        createdBy: accountantUser._id,
+      },
+      {
+        voucherNumber: "JE-00009",
+        date: new Date("2024-02-15"),
+        referenceType: "Payment Received",
+        referenceNumber: "RC-2024-001",
+        remarks: "Payment received from TechVision Solutions against invoice INV-2024-0001",
+        status: "Submitted",
+        totalDebit: 236000,
+        totalCredit: 236000,
+        lineItems: [
+          { account: ac1202, debitAmount: 236000, creditAmount: 0, description: "Cheque deposited in bank" },
+          { account: ac1101, debitAmount: 0, creditAmount: 236000, description: "Receivable settled" },
+        ],
+        createdBy: accountantUser._id,
+      },
+      {
+        voucherNumber: "JE-00010",
+        date: new Date("2024-03-01"),
+        referenceType: "Purchase",
+        referenceNumber: "PO-2024-003",
+        remarks: "IT equipment purchase from TechConnect Distributors",
+        status: "Submitted",
+        totalDebit: 590000,
+        totalCredit: 590000,
+        lineItems: [
+          { account: ac5001, debitAmount: 354000, creditAmount: 0, description: "Computer hardware" },
+          { account: ac5002, debitAmount: 146000, creditAmount: 0, description: "Software licenses" },
+          { account: ac2101, debitAmount: 90000, creditAmount: 0, description: "Input GST @ 18%" },
+          { account: ac2001, debitAmount: 0, creditAmount: 590000, description: "Payable to TechConnect" },
+        ],
+        createdBy: accountantUser._id,
+      },
+      {
+        voucherNumber: "JE-00011",
+        date: new Date("2024-03-05"),
+        referenceType: "Miscellaneous",
+        referenceNumber: "INT-2024-001",
+        remarks: "Interest earned on fixed deposit",
+        status: "Submitted",
+        totalDebit: 15000,
+        totalCredit: 15000,
+        lineItems: [
+          { account: ac1202, debitAmount: 15000, creditAmount: 0, description: "Interest credited by bank" },
+          { account: ac4101, debitAmount: 0, creditAmount: 15000, description: "Interest income" },
+        ],
+        createdBy: juniorAcctUser._id,
+      },
+    ];
+
+    const journalEntries = await JournalEntry.insertMany(journalEntriesData);
+    console.log(`  Created ${journalEntries.length} journal entries.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 8: Sales Invoices
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 8: Seeding Sales Invoices ---");
+
+    const salesInvoicesData = [
+      {
+        invoiceNumber: "SI-00001",
+        customer: customerDocs[0]._id, // TechVision Solutions
+        invoiceDate: new Date("2024-01-10"),
+        items: [
+          { itemName: "ERP Software License - Annual", quantity: 1, rate: 150000, amount: 150000 },
+          { itemName: "Implementation & Training", quantity: 1, rate: 50000, amount: 50000 },
+        ],
+        subtotal: 200000,
+        taxAmount: 36000,
+        grandTotal: 236000,
+        remarks: "Annual ERP license with implementation services",
+        status: "Submitted",
+        createdBy: accountantUser._id,
+      },
+      {
+        invoiceNumber: "SI-00002",
+        customer: customerDocs[1]._id, // GreenLeaf Retail
+        invoiceDate: new Date("2024-01-25"),
+        items: [
+          { itemName: "POS Software License", quantity: 5, rate: 12000, amount: 60000 },
+          { itemName: "Hardware Bundle (Barcode Scanner + Printer)", quantity: 5, rate: 8000, amount: 40000 },
+        ],
+        subtotal: 100000,
+        taxAmount: 18000,
+        grandTotal: 118000,
+        remarks: "Retail POS setup for 5 stores",
+        status: "Submitted",
+        createdBy: accountantUser._id,
+      },
+      {
+        invoiceNumber: "SI-00003",
+        customer: customerDocs[2]._id, // Northern Hardware
+        invoiceDate: new Date("2024-02-10"),
+        items: [
+          { itemName: "Inventory Management Module", quantity: 1, rate: 200000, amount: 200000 },
+          { itemName: "Custom Integration Service", quantity: 1, rate: 100000, amount: 100000 },
+        ],
+        subtotal: 300000,
+        taxAmount: 54000,
+        grandTotal: 354000,
+        remarks: "Custom inventory module with SAP integration",
+        status: "Draft",
+        createdBy: accountantUser._id,
+      },
+      {
+        invoiceNumber: "SI-00004",
+        customer: customerDocs[3]._id, // Eastern Exports
+        invoiceDate: new Date("2024-02-20"),
+        items: [
+          { itemName: "Export Documentation Module", quantity: 1, rate: 175000, amount: 175000 },
+          { itemName: "Compliance Dashboard Setup", quantity: 1, rate: 75000, amount: 75000 },
+        ],
+        subtotal: 250000,
+        taxAmount: 45000,
+        grandTotal: 295000,
+        remarks: "Export compliance software with SEZ features",
+        status: "Submitted",
+        createdBy: accountantUser._id,
+      },
+      {
+        invoiceNumber: "SI-00005",
+        customer: customerDocs[0]._id, // TechVision Solutions
+        invoiceDate: new Date("2024-03-10"),
+        items: [
+          { itemName: "Annual Maintenance Renewal", quantity: 1, rate: 30000, amount: 30000 },
+          { itemName: "Additional User Licenses (10 seats)", quantity: 10, rate: 5000, amount: 50000 },
+        ],
+        subtotal: 80000,
+        taxAmount: 14400,
+        grandTotal: 94400,
+        remarks: "AMC renewal and additional user licenses",
+        status: "Draft",
+        createdBy: juniorAcctUser._id,
+      },
+    ];
+
+    const salesInvoices = await SalesInvoice.insertMany(salesInvoicesData);
+    console.log(`  Created ${salesInvoices.length} sales invoices.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 9: Purchase Invoices
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 9: Seeding Purchase Invoices ---");
+
+    const purchaseInvoicesData = [
+      {
+        invoiceNumber: "PI-00001",
+        supplier: supplierDocs[0]._id, // Global Industrial
+        invoiceDate: new Date("2024-02-01"),
+        items: [
+          { itemName: "Steel Sheets (Grade 304) - 100 units", quantity: 100, rate: 3500, amount: 350000 },
+          { itemName: "Aluminum Profiles - 50 units", quantity: 50, rate: 3000, amount: 150000 },
+        ],
+        subtotal: 500000,
+        taxAmount: 90000,
+        grandTotal: 590000,
+        remarks: "Raw materials for Q1 production",
+        status: "Submitted",
+        createdBy: accountantUser._id,
+      },
+      {
+        invoiceNumber: "PI-00002",
+        supplier: supplierDocs[1]._id, // OfficePro Stationers
+        invoiceDate: new Date("2024-02-05"),
+        items: [
+          { itemName: "Printer Paper A4 (50 boxes)", quantity: 50, rate: 500, amount: 25000 },
+          { itemName: "Office Supplies Kit", quantity: 20, rate: 800, amount: 16000 },
+        ],
+        subtotal: 41000,
+        taxAmount: 7380,
+        grandTotal: 48380,
+        remarks: "Monthly office supplies replenishment",
+        status: "Submitted",
+        createdBy: juniorAcctUser._id,
+      },
+      {
+        invoiceNumber: "PI-00003",
+        supplier: supplierDocs[2]._id, // TechConnect IT Distributors
+        invoiceDate: new Date("2024-03-01"),
+        items: [
+          { itemName: "Dell OptiPlex Desktop (10 units)", quantity: 10, rate: 45000, amount: 450000 },
+          { itemName: "Microsoft 365 Business Licenses (20 seats)", quantity: 20, rate: 5200, amount: 104000 },
+        ],
+        subtotal: 554000,
+        taxAmount: 99720,
+        grandTotal: 653720,
+        remarks: "IT infrastructure upgrade for new hires",
+        status: "Submitted",
+        createdBy: accountantUser._id,
+      },
+      {
+        invoiceNumber: "PI-00004",
+        supplier: supplierDocs[3]._id, // FreshLogistics
+        invoiceDate: new Date("2024-03-05"),
+        items: [
+          { itemName: "Courier Services - Monthly Contract", quantity: 1, rate: 35000, amount: 35000 },
+        ],
+        subtotal: 35000,
+        taxAmount: 6300,
+        grandTotal: 41300,
+        remarks: "Monthly courier service charges - March",
+        status: "Draft",
+        createdBy: juniorAcctUser._id,
+      },
+      {
+        invoiceNumber: "PI-00005",
+        supplier: supplierDocs[4]._id, // Ananya Traders
+        invoiceDate: new Date("2024-03-12"),
+        items: [
+          { itemName: "Packaging Materials Assorted", quantity: 500, rate: 45, amount: 22500 },
+          { itemName: "Shipping Labels & Barcode Stickers", quantity: 1000, rate: 5, amount: 5000 },
+        ],
+        subtotal: 27500,
+        taxAmount: 4950,
+        grandTotal: 32450,
+        remarks: "Packaging supplies for dispatch department",
+        status: "Submitted",
+        createdBy: accountantUser._id,
+      },
+    ];
+
+    const purchaseInvoices = await PurchaseInvoice.insertMany(purchaseInvoicesData);
+    console.log(`  Created ${purchaseInvoices.length} purchase invoices.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // Summary
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("╔══════════════════════════════════════════╗");
+    console.log("║        ERP DATA SEEDING COMPLETE         ║");
+    console.log("╠══════════════════════════════════════════╣");
+    console.log(`║  Permissions:         ${String(seededPermissions.length).padStart(4)}                     ║`);
+    console.log(`║  Roles:               4                     ║`);
+    console.log(`║  Users:               5                     ║`);
+    console.log(`║  Accounts:            ${String(Object.keys(accountMap).length).padStart(4)}                     ║`);
+    console.log(`║  Customers:           ${String(customerDocs.length).padStart(4)}                     ║`);
+    console.log(`║  Suppliers:           ${String(supplierDocs.length).padStart(4)}                     ║`);
+    console.log(`║  Journal Entries:     ${String(journalEntries.length).padStart(4)}                     ║`);
+    console.log(`║  Sales Invoices:      ${String(salesInvoices.length).padStart(4)}                     ║`);
+    console.log(`║  Purchase Invoices:   ${String(purchaseInvoices.length).padStart(4)}                     ║`);
+    console.log("╚══════════════════════════════════════════╝\n");
+
+    console.log("Test Credentials:");
+    console.log("  admin@company.com     / AdminPassword123!  (SYSTEM_ADMIN)");
+    console.log("  accountant@company.com / Accountant@123    (ACCOUNTANT)");
+    console.log("  auditor@company.com    / Auditor@123       (AUDITOR)");
+    console.log("  manager@company.com    / Manager@123       (MANAGER)\n");
+
+    await mongoose.connection.close();
+    console.log("Database connection closed.");
+    process.exit(0);
+  } catch (error) {
+    console.error("Seeding failed:", error);
+    process.exit(1);
+  }
+};
+
+seed();

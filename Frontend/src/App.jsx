@@ -17,6 +17,7 @@ import SalesInvoiceListPage from "./pages/salesInvoices/SalesInvoiceListPage";
 import CreateSalesInvoicePage from "./pages/salesInvoices/CreateSalesInvoicePage";
 import PurchaseInvoiceListPage from "./pages/purchaseInvoices/PurchaseInvoiceListPage";
 import CreatePurchaseInvoicePage from "./pages/purchaseInvoices/CreatePurchaseInvoicePage";
+import EditPurchaseInvoicePage from "./pages/purchaseInvoices/EditPurchaseInvoicePage";
 
 // ==========================================================================
 // PREMIUM AUTHENTICATION PAGES IMPORTS
@@ -24,6 +25,12 @@ import CreatePurchaseInvoicePage from "./pages/purchaseInvoices/CreatePurchaseIn
 import LoginPage from "./pages/auth/LoginPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+
+// ==========================================================================
+// EDIT PAGES IMPORTS
+// ==========================================================================
+import EditSalesInvoicePage from "./pages/salesInvoices/EditSalesInvoicePage";
+import EditJournalEntryPage from "./pages/journalEntries/EditJournalEntryPage";
 
 function App() {
   return (
@@ -52,6 +59,9 @@ function App() {
         <Route path="/sales-invoices/new" element={<CreateSalesInvoicePage />} />
         <Route path="/purchase-invoices" element={<PurchaseInvoiceListPage />} />
         <Route path="/purchase-invoices/new" element={<CreatePurchaseInvoicePage />} />
+        <Route path="/purchase-invoices/:id/edit" element={<EditPurchaseInvoicePage />} />
+        <Route path="/sales-invoices/:id/edit" element={<EditSalesInvoicePage />} />
+        <Route path="/journal-entries/:id/edit" element={<EditJournalEntryPage />} />
         
         {/* Global Fallback Route */}
         <Route path="*" element={<Navigate to="/" replace />} />
