@@ -1,5 +1,6 @@
 import customerRepository from "../repositories/CustomerRepository.js";
 import ApiError from "../utils/ApiError.js";
+import activityLogService from "./ActivityLogService.js";
 
 class CustomerService {
   async createCustomer(customerData) {
@@ -16,7 +17,20 @@ class CustomerService {
       );
     }
 
-    return customerRepository.create(customerData);
+    const customer = await customerRepository.create(customerData);
+
+    await activityLogService.logActivity({
+      action: "Created",
+      entity: "Customer",
+      entityId: customer._id,
+      entityName: customer.customerName,
+      description: `Customer "${customer.customerName}" was created`,
+      category: "business",
+      performedBy: customerData.createdBy,
+      performedByName: customerData.createdByName || "",
+    });
+
+    return customer;
   }
 
   async getCustomers(page, limit, search) {
@@ -42,33 +56,85 @@ class CustomerService {
   }
 
   async updateCustomer(id, data) {
-    await this.getCustomerById(id);
+    const customer = await this.getCustomerById(id);
 
-    return customerRepository.update(id, data);
+    const updated = await customerRepository.update(id, data);
+
+    await activityLogService.logActivity({
+      action: "Updated",
+      entity: "Customer",
+      entityId: customer._id,
+      entityName: customer.customerName,
+      description: `Customer "${customer.customerName}" was updated`,
+      category: "business",
+      performedBy: data.updatedBy,
+      performedByName: data.updatedByName || "",
+    });
+
+    return updated;
   }
 
-  async deleteCustomer(id) {
-    await this.getCustomerById(id);
+  async deleteCustomer(id, userId) {
+    const customer = await this.getCustomerById(id);
 
-    return customerRepository.update(id, {
+    const updated = await customerRepository.update(id, {
       status: "Inactive"
     });
+
+    await activityLogService.logActivity({
+      action: "Deleted",
+      entity: "Customer",
+      entityId: customer._id,
+      entityName: customer.customerName,
+      description: `Customer "${customer.customerName}" was deactivated`,
+      category: "business",
+      performedBy: userId,
+      performedByName: "",
+    });
+
+    return updated;
   }
 
-  async blockCustomer(id) {
-    await this.getCustomerById(id);
+  async blockCustomer(id, userId) {
+    const customer = await this.getCustomerById(id);
 
-    return customerRepository.update(id, {
+    const updated = await customerRepository.update(id, {
       status: "Blocked"
     });
+
+    await activityLogService.logActivity({
+      action: "Blocked",
+      entity: "Customer",
+      entityId: customer._id,
+      entityName: customer.customerName,
+      description: `Customer "${customer.customerName}" was blocked`,
+      category: "business",
+      performedBy: userId,
+      performedByName: "",
+    });
+
+    return updated;
   }
 
-  async activateCustomer(id) {
-    await this.getCustomerById(id);
+  async activateCustomer(id, userId) {
+    const customer = await this.getCustomerById(id);
 
-    return customerRepository.update(id, {
+    const updated = await customerRepository.update(id, {
       status: "Active"
     });
+
+    await activityLogService.logActivity({
+      action: "Activated",
+      entity: "Customer",
+      entityId: customer._id,
+      entityName: customer.customerName,
+      description: `Customer "${customer.customerName}" was activated`,
+      category: "business",
+      performedBy: userId,
+      performedByName: "",
+    });
+
+    return updated;
   }
 }
 

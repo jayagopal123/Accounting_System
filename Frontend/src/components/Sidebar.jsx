@@ -7,20 +7,30 @@ import {
   FaFileSignature,
   FaHome,
   FaPeopleCarry,
+  FaShieldAlt,
   FaUsers,
 } from "react-icons/fa";
-
-const navItems = [
-  { to: "/", label: "Dashboard", icon: FaHome, section: "Overview" },
-  { to: "/accounts", label: "Chart Of Accounts", icon: FaBook, section: "Accounting" },
-  { to: "/journal-entries", label: "Journal Entries", icon: FaFileSignature, section: "Accounting" },
-  { to: "/customers", label: "Customers", icon: FaUsers, section: "Masters" },
-  { to: "/suppliers", label: "Suppliers", icon: FaPeopleCarry, section: "Masters" },
-  { to: "/sales-invoices", label: "Sales Invoices", icon: FaChartLine, section: "Sales" },
-  { to: "/purchase-invoices", label: "Purchase Invoices", icon: FaFileInvoiceDollar, section: "Purchase" },
-];
+import { useAuth } from "../contexts/AuthContext";
 
 function Sidebar() {
+  const { hasPermission } = useAuth();
+  const isAdmin = hasPermission("audit_logs:view");
+
+  const navItems = [
+    { to: "/", label: "Dashboard", icon: FaHome, section: "Overview" },
+    { to: "/accounts", label: "Chart Of Accounts", icon: FaBook, section: "Accounting" },
+    { to: "/journal-entries", label: "Journal Entries", icon: FaFileSignature, section: "Accounting" },
+    { to: "/customers", label: "Customers", icon: FaUsers, section: "Masters" },
+    { to: "/suppliers", label: "Suppliers", icon: FaPeopleCarry, section: "Masters" },
+    { to: "/sales-invoices", label: "Sales Invoices", icon: FaChartLine, section: "Sales" },
+    { to: "/purchase-invoices", label: "Purchase Invoices", icon: FaFileInvoiceDollar, section: "Purchase" },
+  ];
+
+  // Only show System Logs to users with audit_logs:view permission
+  if (isAdmin) {
+    navItems.push({ to: "/system-logs", label: "System Logs", icon: FaShieldAlt, section: "Admin" });
+  }
+
   let currentSection = "";
 
   return (

@@ -1,5 +1,6 @@
 import journalEntryRepository from "../repositories/JournalEntryRepository.js";
 import ApiError from "../utils/ApiError.js";
+import activityLogService from "./ActivityLogService.js";
 
 class JournalEntryService {
   async createJournalEntry(journalData) {
@@ -36,7 +37,21 @@ class JournalEntryService {
     journalData.totalDebit = totalDebit;
     journalData.totalCredit = totalCredit;
 
-    return journalEntryRepository.create(journalData);
+    const journal = await journalEntryRepository.create(journalData);
+
+    await activityLogService.logActivity({
+      action: "Created",
+      entity: "JournalEntry",
+      entityId: journal._id,
+      entityName: journal.voucherNumber,
+      description: `Journal Entry ${journal.voucherNumber} was created for $${totalDebit.toFixed(2)}`,
+      category: "business",
+      performedBy: journal.createdBy,
+      performedByName: "",
+      metadata: { totalDebit, totalCredit },
+    });
+
+    return journal;
   }
 
   async getJournalEntries() {
@@ -85,7 +100,20 @@ class JournalEntryService {
       );
     }
 
-    return journalEntryRepository.submit(id);
+    const journal = await journalEntryRepository.submit(id);
+
+    await activityLogService.logActivity({
+      action: "Submitted",
+      entity: "JournalEntry",
+      entityId: journal._id,
+      entityName: journal.voucherNumber,
+      description: `Journal Entry ${journal.voucherNumber} was posted`,
+      category: "business",
+      performedBy: journal.createdBy,
+      performedByName: "",
+    });
+
+    return journal;
   }
 
   async cancelJournalEntry(id) {
@@ -100,7 +128,20 @@ class JournalEntryService {
       );
     }
 
-    return journalEntryRepository.cancel(id);
+    const journal = await journalEntryRepository.cancel(id);
+
+    await activityLogService.logActivity({
+      action: "Cancelled",
+      entity: "JournalEntry",
+      entityId: journal._id,
+      entityName: journal.voucherNumber,
+      description: `Journal Entry ${journal.voucherNumber} was cancelled`,
+      category: "business",
+      performedBy: journal.createdBy,
+      performedByName: "",
+    });
+
+    return journal;
   }
 }
 

@@ -3,9 +3,10 @@ import supplierService from "../services/SupplierService.js";
 class SupplierController {
   async createSupplier(req, res, next) {
     try {
-      const supplier = await supplierService.createSupplier(
-        req.body
-      );
+      const supplier = await supplierService.createSupplier({
+        ...req.body,
+        createdBy: req.user?._id,
+      });
 
       res.status(201).json({
         success: true,
@@ -60,7 +61,7 @@ class SupplierController {
       const supplier =
         await supplierService.updateSupplier(
           req.params.id,
-          req.body
+          { ...req.body, updatedBy: req.user?._id }
         );
 
       res.status(200).json({
@@ -76,7 +77,8 @@ class SupplierController {
     try {
       const supplier =
         await supplierService.deleteSupplier(
-          req.params.id
+          req.params.id,
+          req.user?._id
         );
 
       res.status(200).json({
@@ -92,7 +94,8 @@ class SupplierController {
     try {
       const supplier =
         await supplierService.blockSupplier(
-          req.params.id
+          req.params.id,
+          req.user?._id
         );
 
       res.status(200).json({
@@ -108,7 +111,8 @@ class SupplierController {
     try {
       const supplier =
         await supplierService.activateSupplier(
-          req.params.id
+          req.params.id,
+          req.user?._id
         );
 
       res.status(200).json({

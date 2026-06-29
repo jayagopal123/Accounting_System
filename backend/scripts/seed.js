@@ -39,7 +39,10 @@ const permissionsData = [
   { name: 'purchase_invoices:cancel', module: 'accounting', description: 'Allows cancelling purchase invoices' },
 
   // Roles
-  { name: 'roles:create', module: 'settings', description: 'Allows creating and mapping security roles' }
+  { name: 'roles:create', module: 'settings', description: 'Allows creating and mapping security roles' },
+
+  // Audit Logs
+  { name: 'audit_logs:view', module: 'settings', description: 'Allows viewing system audit logs' }
 ];
 
 const seed = async () => {

@@ -3,7 +3,10 @@ import customerService from "../services/CustomerService.js";
 class CustomerController {
   async createCustomer(req, res, next) {
     try {
-      const customer = await customerService.createCustomer(req.body);
+      const customer = await customerService.createCustomer({
+        ...req.body,
+        createdBy: req.user?._id,
+      });
 
       res.status(201).json({
         success: true,
@@ -52,7 +55,7 @@ class CustomerController {
     try {
       const customer = await customerService.updateCustomer(
         req.params.id,
-        req.body
+        { ...req.body, updatedBy: req.user?._id }
       );
 
       res.status(200).json({
@@ -67,7 +70,8 @@ class CustomerController {
   async deleteCustomer(req, res, next) {
     try {
       const customer = await customerService.deleteCustomer(
-        req.params.id
+        req.params.id,
+        req.user?._id
       );
 
       res.status(200).json({
@@ -82,7 +86,8 @@ class CustomerController {
   async blockCustomer(req, res, next) {
     try {
       const customer = await customerService.blockCustomer(
-        req.params.id
+        req.params.id,
+        req.user?._id
       );
 
       res.status(200).json({
@@ -97,7 +102,8 @@ class CustomerController {
   async activateCustomer(req, res, next) {
     try {
       const customer = await customerService.activateCustomer(
-        req.params.id
+        req.params.id,
+        req.user?._id
       );
 
       res.status(200).json({

@@ -63,6 +63,7 @@ const PERMISSIONS = [
   { name: "accounts:create", module: "settings", description: "Allows creating chart of accounts" },
   { name: "accounts:view", module: "settings", description: "Allows viewing chart of accounts" },
   { name: "accounts:update", module: "settings", description: "Allows modifying accounts" },
+  { name: "audit_logs:view", module: "settings", description: "Allows viewing system audit logs" },
 ];
 
 // --- Chart of Accounts (hierarchical) ---

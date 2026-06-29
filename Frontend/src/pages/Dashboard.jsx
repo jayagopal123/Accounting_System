@@ -1,8 +1,9 @@
 import MainLayout from "../layouts/MainLayout";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getDashboardSummary } from "../services/dashboardApi";
-import { FaArrowUp, FaCalendarAlt, FaSlidersH } from "react-icons/fa";
+import { getDashboardSummary, getRecentActivities } from "../services/dashboardApi";
+import { FaArrowUp, FaCalendarAlt, FaSlidersH, FaUserPlus, FaFileInvoiceDollar, FaCheckCircle, FaBook, FaBan } from "react-icons/fa";
+import { formatDistanceToNow } from "date-fns";
 
 const cards = [
   { key: "accounts", label: "General Ledger Accounts", descriptor: "Chart Matrix Nodes", route: "/accounts" },
@@ -18,8 +19,56 @@ function Dashboard() {
     suppliers: 0,
     journalEntries: 0,
   });
+  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activityLoading, setActivityLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const getActivityIcon = (action) => {
+    switch (action) {
+      case "Created":
+        return <FaUserPlus size={11} className="text-success" />;
+      case "Submitted":
+        return <FaCheckCircle size={11} className="text-primary" />;
+      case "Updated":
+        return <FaBook size={11} className="text-info" />;
+      case "Cancelled":
+        return <FaBan size={11} className="text-danger" />;
+      case "Deleted":
+        return <FaBan size={11} className="text-danger" />;
+      case "Activated":
+        return <FaCheckCircle size={11} className="text-success" />;
+      case "Blocked":
+        return <FaBan size={11} className="text-warning" />;
+      default:
+        return <FaFileInvoiceDollar size={11} className="text-muted" />;
+    }
+  };
+
+  const getEntityBadge = (entity) => {
+    switch (entity) {
+      case "Customer":
+        return <span className="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style={{ fontSize: "0.6rem", fontWeight: 600 }}>Customer</span>;
+      case "Supplier":
+        return <span className="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25" style={{ fontSize: "0.6rem", fontWeight: 600 }}>Supplier</span>;
+      case "SalesInvoice":
+        return <span className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" style={{ fontSize: "0.6rem", fontWeight: 600 }}>Sales Inv.</span>;
+      case "PurchaseInvoice":
+        return <span className="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25" style={{ fontSize: "0.6rem", fontWeight: 600 }}>Purchase Inv.</span>;
+      case "JournalEntry":
+        return <span className="badge bg-purple bg-opacity-10 text-purple border border-purple border-opacity-25" style={{ fontSize: "0.6rem", fontWeight: 600 }}>Journal</span>;
+      default:
+        return <span className="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25" style={{ fontSize: "0.6rem", fontWeight: 600 }}>{entity}</span>;
+    }
+  };
+
+  const formatTimestamp = (timestamp) => {
+    try {
+      return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+    } catch {
+      return "";
+    }
+  };
 
   useEffect(() => {
     const loadStats = async () => {
@@ -41,7 +90,19 @@ function Dashboard() {
       }
     };
 
+    const loadActivities = async () => {
+      try {
+        const response = await getRecentActivities(8);
+        setActivities(response.data.data || []);
+      } catch {
+        // silently fail, activities are non-critical
+      } finally {
+        setActivityLoading(false);
+      }
+    };
+
     loadStats();
+    loadActivities();
   }, []);
 
   return (
@@ -132,25 +193,47 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Operational Validation Stream */}
+        {/* Recent Activity Stream */}
         <div className="col-12 col-lg-5">
           <div className="page-card p-3.5 h-100" style={{ padding: "1.25rem" }}>
-            <h6 className="fw-bold text-dark mb-3 pb-2 border-bottom" style={{ fontSize: "0.85rem" }}>Security Verification Feed</h6>
+            <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+              <h6 className="fw-bold text-dark mb-0" style={{ fontSize: "0.85rem" }}>Recent Activity</h6>
+              <span className="badge bg-light text-dark font-mono border" style={{ fontSize: "0.625rem" }}>LIVE</span>
+            </div>
             <div className="pt-1">
-              <div className="activity-node active">
-                <div className="d-flex justify-content-between align-items-center">
-                  <span className="fw-semibold text-dark" style={{ fontSize: "0.8rem" }}>Ledger Integrity Check Complete</span>
-                  <span className="text-muted font-mono" style={{ fontSize: "0.625rem" }}>Just Now</span>
+              {activityLoading ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border spinner-border-sm text-muted" role="status" style={{ width: "12px", height: "12px" }}></div>
+                  <p className="text-muted mt-2 mb-0" style={{ fontSize: "0.7rem" }}>Loading activities...</p>
                 </div>
-                <p className="text-muted small mb-0 mt-0.5">Automated trial balance zero checks completed with no asset mismatch flags.</p>
-              </div>
-              <div className="activity-node">
-                <div className="d-flex justify-content-between align-items-center">
-                  <span className="fw-semibold text-dark" style={{ fontSize: "0.8rem" }}>System Endpoints Connected</span>
-                  <span className="text-muted font-mono" style={{ fontSize: "0.625rem" }}>04m ago</span>
+              ) : activities.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-muted mb-0" style={{ fontSize: "0.75rem" }}>No recent business activities recorded.</p>
                 </div>
-                <p className="text-muted small mb-0 mt-0.5">Database parameters fetched from core backend framework without data degradation flags.</p>
-              </div>
+              ) : (
+                activities.map((activity, index) => (
+                  <div className={`activity-node ${index === 0 ? "active" : ""}`} key={activity._id}>
+                    <div className="d-flex align-items-start gap-2">
+                      <div className="mt-0.5">
+                        {getActivityIcon(activity.action)}
+                      </div>
+                      <div className="flex-grow-1 min-w-0">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <span className="fw-semibold text-dark" style={{ fontSize: "0.75rem" }}>{activity.action}: {activity.entityName || activity.entity}</span>
+                          <span className="text-muted font-mono flex-shrink-0 ms-2" style={{ fontSize: "0.6rem" }}>{formatTimestamp(activity.createdAt)}</span>
+                        </div>
+                        <p className="text-muted mb-0 mt-0.5" style={{ fontSize: "0.7rem", lineHeight: 1.3 }}>{activity.description}</p>
+                        <div className="mt-1">
+                          {getEntityBadge(activity.entity)}
+                          {activity.performedByName ? (
+                            <span className="text-muted ms-2" style={{ fontSize: "0.6rem" }}>by {activity.performedByName}</span>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

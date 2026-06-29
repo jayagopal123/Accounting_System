@@ -2,6 +2,7 @@ import purchaseInvoiceRepository from "../repositories/PurchaseInvoiceRepository
 import journalEntryRepository from "../repositories/JournalEntryRepository.js";
 import accountRepository from "../repositories/AccountRepository.js";
 import ApiError from "../utils/ApiError.js";
+import activityLogService from "./ActivityLogService.js";
 
 class PurchaseInvoiceService {
   async createPurchaseInvoice(invoiceData) {
@@ -33,7 +34,21 @@ class PurchaseInvoiceService {
     invoiceData.taxAmount = taxAmount;
     invoiceData.grandTotal = grandTotal;
 
-    return purchaseInvoiceRepository.create(invoiceData);
+    const invoice = await purchaseInvoiceRepository.create(invoiceData);
+
+    await activityLogService.logActivity({
+      action: "Created",
+      entity: "PurchaseInvoice",
+      entityId: invoice._id,
+      entityName: invoice.invoiceNumber,
+      description: `Purchase Invoice ${invoice.invoiceNumber} was created for $${grandTotal.toFixed(2)}`,
+      category: "business",
+      performedBy: invoice.createdBy,
+      performedByName: "",
+      metadata: { grandTotal, supplier: invoiceData.supplier },
+    });
+
+    return invoice;
   }
 
   async getPurchaseInvoices() {
@@ -115,7 +130,20 @@ class PurchaseInvoiceService {
       ],
     });
 
-    return purchaseInvoiceRepository.submit(id);
+    const submittedInvoice = await purchaseInvoiceRepository.submit(id);
+
+    await activityLogService.logActivity({
+      action: "Submitted",
+      entity: "PurchaseInvoice",
+      entityId: submittedInvoice._id,
+      entityName: submittedInvoice.invoiceNumber,
+      description: `Purchase Invoice ${submittedInvoice.invoiceNumber} was submitted and approved`,
+      category: "business",
+      performedBy: submittedInvoice.createdBy,
+      performedByName: "",
+    });
+
+    return submittedInvoice;
   }
 
   async cancelPurchaseInvoice(id) {
@@ -129,7 +157,20 @@ class PurchaseInvoiceService {
       );
     }
 
-    return purchaseInvoiceRepository.cancel(id);
+    const cancelledInvoice = await purchaseInvoiceRepository.cancel(id);
+
+    await activityLogService.logActivity({
+      action: "Cancelled",
+      entity: "PurchaseInvoice",
+      entityId: cancelledInvoice._id,
+      entityName: cancelledInvoice.invoiceNumber,
+      description: `Purchase Invoice ${cancelledInvoice.invoiceNumber} was cancelled`,
+      category: "business",
+      performedBy: cancelledInvoice.createdBy,
+      performedByName: "",
+    });
+
+    return cancelledInvoice;
   }
 }
 

@@ -31,6 +31,7 @@ import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 // ==========================================================================
 import EditSalesInvoicePage from "./pages/salesInvoices/EditSalesInvoicePage";
 import EditJournalEntryPage from "./pages/journalEntries/EditJournalEntryPage";
+import SystemLogsPage from "./pages/system-logs/SystemLogsPage";
 
 function App() {
   return (
@@ -62,6 +63,7 @@ function App() {
         <Route path="/purchase-invoices/:id/edit" element={<EditPurchaseInvoicePage />} />
         <Route path="/sales-invoices/:id/edit" element={<EditSalesInvoicePage />} />
         <Route path="/journal-entries/:id/edit" element={<EditJournalEntryPage />} />
+        <Route path="/system-logs" element={<SystemLogsPage />} />
         
         {/* Global Fallback Route */}
         <Route path="*" element={<Navigate to="/" replace />} />

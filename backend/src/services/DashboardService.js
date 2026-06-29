@@ -2,6 +2,7 @@ import Account from "../models/Account.js";
 import Customer from "../models/Customer.js";
 import Supplier from "../models/Supplier.js";
 import JournalEntry from "../models/JournalEntry.js";
+import activityLogService from "./ActivityLogService.js";
 
 class DashboardService {
   async getSummary() {
@@ -19,6 +20,10 @@ class DashboardService {
       totalActivePayableAccounts: activeSuppliers,
       totalUnpostedJournalEntries: unpostedJournals,
     };
+  }
+
+  async getRecentActivities(limit = 10) {
+    return activityLogService.getRecentBusinessActivities(limit);
   }
 }
 

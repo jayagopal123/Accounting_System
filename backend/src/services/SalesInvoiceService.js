@@ -2,6 +2,7 @@ import salesInvoiceRepository from "../repositories/SalesInvoiceRepository.js";
 import journalEntryRepository from "../repositories/JournalEntryRepository.js";
 import accountRepository from "../repositories/AccountRepository.js";
 import ApiError from "../utils/ApiError.js";
+import activityLogService from "./ActivityLogService.js";
 
 class SalesInvoiceService {
   async createSalesInvoice(invoiceData) {
@@ -32,7 +33,21 @@ class SalesInvoiceService {
     invoiceData.taxAmount = taxAmount;
     invoiceData.grandTotal = grandTotal;
 
-    return salesInvoiceRepository.create(invoiceData);
+    const invoice = await salesInvoiceRepository.create(invoiceData);
+
+    await activityLogService.logActivity({
+      action: "Created",
+      entity: "SalesInvoice",
+      entityId: invoice._id,
+      entityName: invoice.invoiceNumber,
+      description: `Sales Invoice ${invoice.invoiceNumber} was created for $${grandTotal.toFixed(2)}`,
+      category: "business",
+      performedBy: invoice.createdBy,
+      performedByName: "",
+      metadata: { grandTotal, customer: invoiceData.customer },
+    });
+
+    return invoice;
   }
 
   async getSalesInvoices() {
@@ -111,7 +126,20 @@ class SalesInvoiceService {
       status: "Submitted"
     });
 
-    return salesInvoiceRepository.submit(id);
+    const submittedInvoice = await salesInvoiceRepository.submit(id);
+
+    await activityLogService.logActivity({
+      action: "Submitted",
+      entity: "SalesInvoice",
+      entityId: submittedInvoice._id,
+      entityName: submittedInvoice.invoiceNumber,
+      description: `Sales Invoice ${submittedInvoice.invoiceNumber} was submitted and posted`,
+      category: "business",
+      performedBy: submittedInvoice.createdBy,
+      performedByName: "",
+    });
+
+    return submittedInvoice;
   }
 
   async cancelSalesInvoice(id) {
@@ -125,7 +153,20 @@ class SalesInvoiceService {
       );
     }
 
-    return salesInvoiceRepository.cancel(id);
+    const cancelledInvoice = await salesInvoiceRepository.cancel(id);
+
+    await activityLogService.logActivity({
+      action: "Cancelled",
+      entity: "SalesInvoice",
+      entityId: cancelledInvoice._id,
+      entityName: cancelledInvoice.invoiceNumber,
+      description: `Sales Invoice ${cancelledInvoice.invoiceNumber} was cancelled`,
+      category: "business",
+      performedBy: cancelledInvoice.createdBy,
+      performedByName: "",
+    });
+
+    return cancelledInvoice;
   }
 }
 

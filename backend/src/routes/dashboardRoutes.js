@@ -10,4 +10,10 @@ router.get(
   dashboardController.getSummary,
 );
 
+router.get(
+  "/recent-activities",
+  authenticate,
+  dashboardController.getRecentActivities,
+);
+
 export default router;

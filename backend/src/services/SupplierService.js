@@ -1,5 +1,6 @@
 import supplierRepository from "../repositories/SupplierRepository.js";
 import ApiError from "../utils/ApiError.js";
+import activityLogService from "./ActivityLogService.js";
 
 class SupplierService {
   async createSupplier(supplierData) {
@@ -46,7 +47,20 @@ class SupplierService {
       }
     }
 
-    return supplierRepository.create(supplierData);
+    const supplier = await supplierRepository.create(supplierData);
+
+    await activityLogService.logActivity({
+      action: "Created",
+      entity: "Supplier",
+      entityId: supplier._id,
+      entityName: supplier.supplierName,
+      description: `Supplier "${supplier.supplierName}" was created`,
+      category: "business",
+      performedBy: supplierData.createdBy,
+      performedByName: supplierData.createdByName || "",
+    });
+
+    return supplier;
   }
 
   async getSuppliers(page, limit, search) {
@@ -77,27 +91,79 @@ class SupplierService {
   }
 
   async updateSupplier(id, data) {
-    await this.getSupplierById(id);
+    const supplier = await this.getSupplierById(id);
 
-    return supplierRepository.update(id, data);
+    const updated = await supplierRepository.update(id, data);
+
+    await activityLogService.logActivity({
+      action: "Updated",
+      entity: "Supplier",
+      entityId: supplier._id,
+      entityName: supplier.supplierName,
+      description: `Supplier "${supplier.supplierName}" was updated`,
+      category: "business",
+      performedBy: data.updatedBy,
+      performedByName: data.updatedByName || "",
+    });
+
+    return updated;
   }
 
-  async deleteSupplier(id) {
-    await this.getSupplierById(id);
+  async deleteSupplier(id, userId) {
+    const supplier = await this.getSupplierById(id);
 
-    return supplierRepository.softDelete(id);
+    const updated = await supplierRepository.softDelete(id);
+
+    await activityLogService.logActivity({
+      action: "Deleted",
+      entity: "Supplier",
+      entityId: supplier._id,
+      entityName: supplier.supplierName,
+      description: `Supplier "${supplier.supplierName}" was deleted`,
+      category: "business",
+      performedBy: userId,
+      performedByName: "",
+    });
+
+    return updated;
   }
 
-  async blockSupplier(id) {
-    await this.getSupplierById(id);
+  async blockSupplier(id, userId) {
+    const supplier = await this.getSupplierById(id);
 
-    return supplierRepository.blockSupplier(id);
+    const updated = await supplierRepository.blockSupplier(id);
+
+    await activityLogService.logActivity({
+      action: "Blocked",
+      entity: "Supplier",
+      entityId: supplier._id,
+      entityName: supplier.supplierName,
+      description: `Supplier "${supplier.supplierName}" was blocked`,
+      category: "business",
+      performedBy: userId,
+      performedByName: "",
+    });
+
+    return updated;
   }
 
-  async activateSupplier(id) {
-    await this.getSupplierById(id);
+  async activateSupplier(id, userId) {
+    const supplier = await this.getSupplierById(id);
 
-    return supplierRepository.activateSupplier(id);
+    const updated = await supplierRepository.activateSupplier(id);
+
+    await activityLogService.logActivity({
+      action: "Activated",
+      entity: "Supplier",
+      entityId: supplier._id,
+      entityName: supplier.supplierName,
+      description: `Supplier "${supplier.supplierName}" was activated`,
+      category: "business",
+      performedBy: userId,
+      performedByName: "",
+    });
+
+    return updated;
   }
 }
 

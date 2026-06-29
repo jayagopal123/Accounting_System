@@ -11,6 +11,7 @@ import journalEntryRoutes from "./routes/journalEntryRoutes.js";
 import salesInvoiceRoutes from "./routes/salesInvoiceRoutes.js";
 import purchaseInvoiceRoutes from "./routes/purchaseInvoiceRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import systemLogRoutes from "./routes/systemLogRoutes.js";
 
 import errorHandler from "./middleware/errorHandler.js";
 import ApiError from "./utils/ApiError.js";
@@ -30,6 +31,7 @@ app.use("/api/journal-entries", journalEntryRoutes);
 app.use("/api/sales-invoices", salesInvoiceRoutes);
 app.use("/api/purchase-invoices", purchaseInvoiceRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/system-logs", systemLogRoutes);
 
 app.use("*", (req, res, next) => {
   next(
