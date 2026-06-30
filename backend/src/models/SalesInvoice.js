@@ -1,5 +1,16 @@
 import mongoose from "mongoose";
 
+const taxBreakdownItemSchema = new mongoose.Schema(
+  {
+    taxName: { type: String, required: true },
+    taxCode: { type: String, required: true },
+    taxType: { type: String, required: true },
+    rate: { type: Number, required: true },
+    amount: { type: Number, required: true },
+  },
+  { _id: false },
+);
+
 const salesInvoiceItemSchema = new mongoose.Schema(
   {
     itemName: {
@@ -56,6 +67,14 @@ const salesInvoiceSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+
+    taxGroup: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "TaxGroup",
+      default: null,
+    },
+
+    taxBreakdown: [taxBreakdownItemSchema],
 
     taxAmount: {
       type: Number,

@@ -3,11 +3,17 @@ import {
   FaBook,
   FaBoxes,
   FaChartLine,
+  FaChartPie,
+  FaCog,
+  FaPercent,
   FaFileInvoiceDollar,
   FaFileSignature,
   FaHome,
+  FaIndustry,
+  FaMoneyCheckAlt,
   FaPeopleCarry,
   FaShieldAlt,
+  FaUniversity,
   FaUsers,
 } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
@@ -30,6 +36,20 @@ function Sidebar() {
     { to: "/sales-invoices", label: "Sales Invoices", icon: FaChartLine, section: "Sales" },
     { to: "/purchase-invoices", label: "Purchase Invoices", icon: FaFileInvoiceDollar, section: "Purchase" },
     { to: "/payments", label: "Payments & Receipts", icon: FaFileInvoiceDollar, section: "Purchase" },
+    { to: "/bank-accounts", label: "Bank Accounts", icon: FaUniversity, section: "Banking" },
+    { to: "/bank-transactions", label: "Bank Transactions", icon: FaMoneyCheckAlt, section: "Banking" },
+    { to: "/bank-reconciliation", label: "Reconciliation", icon: FaCog, section: "Banking" },
+    { to: "/budgets", label: "Budgets", icon: FaChartPie, section: "Budgeting" },
+    { to: "/settings/cost-centers", label: "Cost Centers", icon: FaCog, section: "Settings" },
+    { to: "/settings/fiscal-years", label: "Fiscal Years", icon: FaCog, section: "Settings" },
+    { to: "/settings/numbering-series", label: "Numbering Series", icon: FaCog, section: "Settings" },
+    { to: "/settings/exchange-rates", label: "Exchange Rates", icon: FaCog, section: "Settings" },
+    { to: "/tax-rates", label: "Tax Rates", icon: FaPercent, section: "Tax" },
+    { to: "/tax-groups", label: "Tax Groups", icon: FaPercent, section: "Tax" },
+    { to: "/reports/gstr-1", label: "GSTR-1", icon: FaChartLine, section: "Tax" },
+    { to: "/reports/gstr-3b", label: "GSTR-3B", icon: FaChartLine, section: "Tax" },
+    { to: "/assets", label: "Fixed Assets", icon: FaIndustry, section: "Assets" },
+    { to: "/settings/asset-categories", label: "Asset Categories", icon: FaCog, section: "Assets" },
   ];
 
   // Only show System Logs to users with audit_logs:view permission

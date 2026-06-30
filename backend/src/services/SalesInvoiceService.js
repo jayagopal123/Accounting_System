@@ -1,6 +1,7 @@
 import salesInvoiceRepository from "../repositories/SalesInvoiceRepository.js";
 import journalEntryRepository from "../repositories/JournalEntryRepository.js";
 import accountRepository from "../repositories/AccountRepository.js";
+import taxGroupService from "./TaxGroupService.js";
 import ApiError from "../utils/ApiError.js";
 import activityLogService from "./ActivityLogService.js";
 
@@ -25,11 +26,20 @@ class SalesInvoiceService {
       subtotal += item.amount;
     }
 
-    const taxAmount = subtotal * 0.18;
+    let taxAmount = 0;
+    let taxBreakdown = [];
+
+    if (invoiceData.taxGroup) {
+      const taxResult = await taxGroupService.calculateTax(invoiceData.taxGroup, subtotal);
+      taxBreakdown = taxResult.taxBreakdown;
+      taxAmount = taxResult.totalTax;
+    }
+
     const grandTotal = subtotal + taxAmount;
 
     invoiceData.invoiceNumber = invoiceNumber;
     invoiceData.subtotal = subtotal;
+    invoiceData.taxBreakdown = taxBreakdown;
     invoiceData.taxAmount = taxAmount;
     invoiceData.grandTotal = grandTotal;
 
@@ -94,7 +104,6 @@ class SalesInvoiceService {
     }
 
     const accountsReceivable = await accountRepository.findByCode("1101");
-
     const salesRevenue = await accountRepository.findByCode("4001");
 
     if (!accountsReceivable || !salesRevenue) {
@@ -105,6 +114,42 @@ class SalesInvoiceService {
       );
     }
 
+    // Build journal entry line items
+    const lineItems = [
+      {
+        account: accountsReceivable._id,
+        debitAmount: invoice.grandTotal,
+        creditAmount: 0,
+        description: "Accounts Receivable",
+      },
+      {
+        account: salesRevenue._id,
+        debitAmount: 0,
+        creditAmount: invoice.subtotal,
+        description: "Sales Revenue",
+      },
+    ];
+
+    // Add tax liability lines for output taxes (e.g., CGST, SGST, IGST)
+    if (invoice.taxBreakdown && invoice.taxBreakdown.length > 0) {
+      for (const tax of invoice.taxBreakdown) {
+        const accountCode =
+          tax.taxType === "CGST" ? "2401" :
+          tax.taxType === "SGST" ? "2402" :
+          tax.taxType === "IGST" ? "2403" : "2400";
+        const outputTaxAccount = await accountRepository.findByCode(accountCode);
+        if (!outputTaxAccount) {
+          throw new ApiError(404, `Output tax account ${accountCode} not found for ${tax.taxName}. Please create it in Chart of Accounts.`, "TAX_ACCOUNT_NOT_FOUND");
+        }
+        lineItems.push({
+          account: outputTaxAccount._id,
+          debitAmount: 0,
+          creditAmount: tax.amount,
+          description: `${tax.taxName} (${tax.taxCode})`,
+        });
+      }
+    }
+
     await journalEntryRepository.create({
       voucherNumber: `JE-SI-${invoice.invoiceNumber}`,
       remarks: `Sales Invoice ${invoice.invoiceNumber}`,
@@ -112,18 +157,7 @@ class SalesInvoiceService {
       totalCredit: invoice.grandTotal,
       referenceType: "SalesInvoice",
       referenceNumber: invoice.invoiceNumber,
-      lineItems: [
-        {
-          account: accountsReceivable._id,
-          debitAmount: invoice.grandTotal,
-          creditAmount: 0
-        },
-        {
-          account: salesRevenue._id,
-          debitAmount: 0,
-          creditAmount: invoice.grandTotal
-        }
-      ],
+      lineItems,
       createdBy: invoice.createdBy,
       status: "Submitted"
     });

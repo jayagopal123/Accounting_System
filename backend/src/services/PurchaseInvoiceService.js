@@ -1,6 +1,7 @@
 import purchaseInvoiceRepository from "../repositories/PurchaseInvoiceRepository.js";
 import journalEntryRepository from "../repositories/JournalEntryRepository.js";
 import accountRepository from "../repositories/AccountRepository.js";
+import taxGroupService from "./TaxGroupService.js";
 import ApiError from "../utils/ApiError.js";
 import activityLogService from "./ActivityLogService.js";
 
@@ -26,11 +27,20 @@ class PurchaseInvoiceService {
       subtotal += item.amount;
     }
 
-    const taxAmount = subtotal * 0.18;
+    let taxAmount = 0;
+    let taxBreakdown = [];
+
+    if (invoiceData.taxGroup) {
+      const taxResult = await taxGroupService.calculateTax(invoiceData.taxGroup, subtotal);
+      taxBreakdown = taxResult.taxBreakdown;
+      taxAmount = taxResult.totalTax;
+    }
+
     const grandTotal = subtotal + taxAmount;
 
     invoiceData.invoiceNumber = invoiceNumber;
     invoiceData.subtotal = subtotal;
+    invoiceData.taxBreakdown = taxBreakdown;
     invoiceData.taxAmount = taxAmount;
     invoiceData.grandTotal = grandTotal;
 
@@ -109,6 +119,43 @@ class PurchaseInvoiceService {
       );
     }
 
+    // Build journal entry line items
+    const lineItems = [
+      {
+        account: purchaseExpense._id,
+        debitAmount: invoice.subtotal,
+        creditAmount: 0,
+        description: "Purchase Expense",
+      },
+    ];
+
+    // Add input tax receivable lines (e.g., CGST, SGST, IGST)
+    if (invoice.taxBreakdown && invoice.taxBreakdown.length > 0) {
+      for (const tax of invoice.taxBreakdown) {
+        const accountCode =
+          tax.taxType === "CGST" ? "1301" :
+          tax.taxType === "SGST" ? "1302" :
+          tax.taxType === "IGST" ? "1303" : "1300";
+        const inputTaxAccount = await accountRepository.findByCode(accountCode);
+        if (!inputTaxAccount) {
+          throw new ApiError(404, `Input tax account ${accountCode} not found for ${tax.taxName}. Please create it in Chart of Accounts.`, "TAX_ACCOUNT_NOT_FOUND");
+        }
+        lineItems.push({
+          account: inputTaxAccount._id,
+          debitAmount: tax.amount,
+          creditAmount: 0,
+          description: `${tax.taxName} (${tax.taxCode})`,
+        });
+      }
+    }
+
+    lineItems.push({
+      account: accountsPayable._id,
+      debitAmount: 0,
+      creditAmount: invoice.grandTotal,
+      description: "Accounts Payable",
+    });
+
     await journalEntryRepository.create({
       voucherNumber: `JE-PI-${invoice.invoiceNumber}`,
       remarks: `Purchase Invoice ${invoice.invoiceNumber}`,
@@ -118,18 +165,7 @@ class PurchaseInvoiceService {
       referenceNumber: invoice.invoiceNumber,
       status: "Submitted",
       createdBy: invoice.createdBy,
-      lineItems: [
-        {
-          account: purchaseExpense._id,
-          debitAmount: invoice.grandTotal,
-          creditAmount: 0,
-        },
-        {
-          account: accountsPayable._id,
-          debitAmount: 0,
-          creditAmount: invoice.grandTotal,
-        },
-      ],
+      lineItems,
     });
 
     const submittedInvoice = await purchaseInvoiceRepository.submit(id);

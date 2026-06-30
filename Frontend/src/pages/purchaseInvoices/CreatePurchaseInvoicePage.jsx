@@ -4,6 +4,7 @@ import MainLayout from "../../layouts/MainLayout";
 import { useAuth } from "../../contexts/AuthContext";
 import { createPurchaseInvoice } from "../../services/purchaseInvoiceApi";
 import { getSuppliers } from "../../services/supplierApi";
+import { getActiveTaxGroups } from "../../services/taxGroupApi";
 
 function CreatePurchaseInvoicePage() {
   const navigate = useNavigate();
@@ -20,32 +21,44 @@ function CreatePurchaseInvoicePage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [taxGroups, setTaxGroups] = useState([]);
+
   const [formData, setFormData] = useState({
     supplier: "",
     invoiceDate: new Date().toISOString().slice(0, 10),
     remarks: "",
+    taxGroup: "",
     items: [{ itemName: "", quantity: 1, rate: 0, amount: 0 }],
   });
 
   useEffect(() => {
-    const loadSuppliers = async () => {
+    const loadData = async () => {
       try {
-        const response = await getSuppliers({ limit: 100 });
-        setSuppliers(response.data.data.suppliers || response.data.data || []);
+        const [supRes, taxRes] = await Promise.all([
+          getSuppliers({ limit: 100 }),
+          getActiveTaxGroups(),
+        ]);
+        setSuppliers(supRes.data.data.suppliers || supRes.data.data || []);
+        setTaxGroups(taxRes.data.data || []);
       } catch {
         setSuppliers([]);
+        setTaxGroups([]);
       } finally {
         setLoadingSuppliers(false);
       }
     };
-    loadSuppliers();
+    loadData();
   }, []);
 
   const totals = useMemo(() => {
     const subtotal = formData.items.reduce((sum, item) => sum + Number(item.quantity) * Number(item.rate), 0);
-    const taxAmount = subtotal * 0.18;
+    const selectedGroup = taxGroups.find((g) => g._id === formData.taxGroup);
+    const combinedRate = selectedGroup
+      ? (selectedGroup.taxes || []).reduce((sum, t) => sum + (t.taxRate?.rate || 0), 0)
+      : 0;
+    const taxAmount = formData.taxGroup ? (subtotal * combinedRate) / 100 : 0;
     return { subtotal, taxAmount, grandTotal: subtotal + taxAmount };
-  }, [formData.items]);
+  }, [formData.items, formData.taxGroup, taxGroups]);
 
   const updateItem = (index, field, value) => {
     setFormData((current) => ({
@@ -106,7 +119,16 @@ function CreatePurchaseInvoicePage() {
               </select>
             </div>
             <div className="col-md-6"><label className="form-label">Invoice Date</label><input className="form-control" type="date" value={formData.invoiceDate} onChange={(e) => setFormData((c) => ({ ...c, invoiceDate: e.target.value }))} /></div>
-            <div className="col-12"><label className="form-label">Remarks</label><textarea className="form-control" rows="2" value={formData.remarks} onChange={(e) => setFormData((c) => ({ ...c, remarks: e.target.value }))} placeholder="Optional notes..." /></div>
+            <div className="col-md-6">
+                <label className="form-label">Tax Group</label>
+                <select className="form-select" value={formData.taxGroup} onChange={(e) => setFormData((c) => ({ ...c, taxGroup: e.target.value }))}>
+                  <option value="">No Tax (Nil Rated)</option>
+                  {taxGroups.map((g) => (
+                    <option key={g._id} value={g._id}>{g.groupName} ({g.groupCode})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-12"><label className="form-label">Remarks</label><textarea className="form-control" rows="2" value={formData.remarks} onChange={(e) => setFormData((c) => ({ ...c, remarks: e.target.value }))} placeholder="Optional notes..." /></div>
           </div>
 
           <div className="form-section-title">Line Items</div>
@@ -146,7 +168,7 @@ function CreatePurchaseInvoicePage() {
           <div className="d-flex justify-content-end">
             <div style={{ minWidth: "220px" }}>
               <div className="summary-row"><span className="summary-label">Subtotal</span><span className="summary-value">{totals.subtotal.toFixed(2)}</span></div>
-              <div className="summary-row"><span className="summary-label">Tax (18%)</span><span className="summary-value">{totals.taxAmount.toFixed(2)}</span></div>
+              <div className="summary-row"><span className="summary-label">Tax {formData.taxGroup ? `(${totals.subtotal > 0 ? ((totals.taxAmount / totals.subtotal) * 100).toFixed(1) : 0}%)` : ""}</span><span className="summary-value">{totals.taxAmount.toFixed(2)}</span></div>
               <div className="summary-row total"><span className="summary-label">Grand Total</span><span className="summary-value">{totals.grandTotal.toFixed(2)}</span></div>
             </div>
           </div>

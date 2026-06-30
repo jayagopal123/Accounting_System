@@ -3,6 +3,9 @@ import journalEntryRepository from "../repositories/JournalEntryRepository.js";
 import accountRepository from "../repositories/AccountRepository.js";
 import salesInvoiceRepository from "../repositories/SalesInvoiceRepository.js";
 import purchaseInvoiceRepository from "../repositories/PurchaseInvoiceRepository.js";
+import bankTransactionRepository from "../repositories/BankTransactionRepository.js";
+import bankAccountRepository from "../repositories/BankAccountRepository.js";
+import bankAccountService from "./BankAccountService.js";
 import ApiError from "../utils/ApiError.js";
 import activityLogService from "./ActivityLogService.js";
 
@@ -193,6 +196,46 @@ class PaymentService {
 
     // Also update the payment with the journal entry reference
     await paymentRepository.update(id, { journalEntry: journal._id });
+
+    // Create bank transaction for Bank Transfer / Cheque / Online payments
+    if (["Bank Transfer", "Cheque", "Online"].includes(payment.paymentMethod)) {
+      try {
+        // Find a bank account linked to the cash/bank account
+        const bankAccount = await bankAccountRepository.findOne({
+          isActive: true,
+        });
+
+        if (bankAccount) {
+          await bankTransactionRepository.create({
+            bankAccount: bankAccount._id,
+            transactionDate: payment.paymentDate || new Date(),
+            transactionType:
+              payment.paymentType === "Receipt" ? "Deposit" : "Withdrawal",
+            amount: payment.amount,
+            description: `${payment.paymentType} ${payment.paymentNumber} - ${payment.invoiceType}`,
+            referenceType: "Payment",
+            referenceId: payment._id,
+            referenceNumber: payment.paymentNumber,
+            paymentMethod: payment.paymentMethod,
+            chequeNumber:
+              payment.paymentMethod === "Cheque"
+                ? payment.referenceNumber || ""
+                : "",
+            status: payment.paymentMethod === "Cheque" ? "Pending" : "Cleared",
+            createdBy: payment.createdBy,
+          });
+
+          // Recalculate bank balance
+          await bankAccountService.recalculateBalance(bankAccount._id);
+        }
+      } catch (err) {
+        // Log but don't fail payment submission if bank transaction creation fails
+        console.error(
+          `Failed to create bank transaction for payment ${payment.paymentNumber}:`,
+          err.message,
+        );
+      }
+    }
 
     await activityLogService.logActivity({
       action: "Submitted",
