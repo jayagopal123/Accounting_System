@@ -12,6 +12,8 @@ import salesInvoiceRoutes from "./routes/salesInvoiceRoutes.js";
 import purchaseInvoiceRoutes from "./routes/purchaseInvoiceRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import systemLogRoutes from "./routes/systemLogRoutes.js";
+import financialReportRoutes from "./routes/financialReportRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 
 import errorHandler from "./middleware/errorHandler.js";
 import ApiError from "./utils/ApiError.js";
@@ -32,6 +34,8 @@ app.use("/api/sales-invoices", salesInvoiceRoutes);
 app.use("/api/purchase-invoices", purchaseInvoiceRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/system-logs", systemLogRoutes);
+app.use("/api/reports", financialReportRoutes);
+app.use("/api/payments", paymentRoutes);
 
 app.use("*", (req, res, next) => {
   next(

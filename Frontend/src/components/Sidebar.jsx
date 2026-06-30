@@ -20,10 +20,16 @@ function Sidebar() {
     { to: "/", label: "Dashboard", icon: FaHome, section: "Overview" },
     { to: "/accounts", label: "Chart Of Accounts", icon: FaBook, section: "Accounting" },
     { to: "/journal-entries", label: "Journal Entries", icon: FaFileSignature, section: "Accounting" },
+    { to: "/reports/general-ledger", label: "General Ledger", icon: FaBook, section: "Reports" },
+    { to: "/reports/trial-balance", label: "Trial Balance", icon: FaChartLine, section: "Reports" },
+    { to: "/reports/profit-loss", label: "Profit & Loss", icon: FaChartLine, section: "Reports" },
+    { to: "/reports/balance-sheet", label: "Balance Sheet", icon: FaChartLine, section: "Reports" },
+    { to: "/reports/cash-flow", label: "Cash Flow", icon: FaChartLine, section: "Reports" },
     { to: "/customers", label: "Customers", icon: FaUsers, section: "Masters" },
     { to: "/suppliers", label: "Suppliers", icon: FaPeopleCarry, section: "Masters" },
     { to: "/sales-invoices", label: "Sales Invoices", icon: FaChartLine, section: "Sales" },
     { to: "/purchase-invoices", label: "Purchase Invoices", icon: FaFileInvoiceDollar, section: "Purchase" },
+    { to: "/payments", label: "Payments & Receipts", icon: FaFileInvoiceDollar, section: "Purchase" },
   ];
 
   // Only show System Logs to users with audit_logs:view permission

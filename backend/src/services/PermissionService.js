@@ -1,5 +1,5 @@
-const PermissionRepository = require('../repositories/PermissionRepository');
-const ApiError = require('../utils/ApiError');
+import PermissionRepository from "../repositories/PermissionRepository.js";
+import ApiError from "../utils/ApiError.js";
 
 class PermissionService {
   constructor() {
@@ -12,7 +12,7 @@ class PermissionService {
 
     const existingPermission = await this.permissionRepository.findByName(normalizedName);
     if (existingPermission) {
-      throw new ApiError(409, `Permission ${normalizedName} already exists`, 'PERMISSION_ALREADY_EXISTS');
+      throw new ApiError(409, `Permission ${normalizedName} already exists`, "PERMISSION_ALREADY_EXISTS");
     }
 
     return this.permissionRepository.create({
@@ -27,4 +27,4 @@ class PermissionService {
   }
 }
 
-module.exports = PermissionService;
+export default PermissionService;

@@ -95,6 +95,8 @@ a {
   display: flex !important;
   flex-direction: column !important;
   width: 260px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
 
 /* സൈഡ്ബാറിലെ ബ്രാൻഡ് ടെക്സ്റ്റുകൾ വൈറ്റാക്കാൻ */
@@ -427,7 +429,26 @@ a.stat-card * {
   background-color: #059669 !important;
 }
 /* ==========================================================================
-   7. PREMIUM AUTHENTICATION ENGINE (SPLIT-SCREEN INTERFACE)
+   7. CUSTOM UTILITY CLASSES (Non-Bootstrap gap/padding/color helpers)
+   ========================================================================== */
+.gap-1\.5 { gap: 0.375rem !important; }
+.gap-0\.5 { gap: 0.125rem !important; }
+.py-1\.5 { padding-top: 0.375rem !important; padding-bottom: 0.375rem !important; }
+.px-2\.5 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+
+.bg-purple { background-color: #7c3aed !important; }
+.text-purple { color: #7c3aed !important; }
+.bg-opacity-10\.purple { background-color: rgba(124, 58, 237, 0.1) !important; }
+
+.user-select-none {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* ==========================================================================
+   8. PREMIUM AUTHENTICATION ENGINE (SPLIT-SCREEN INTERFACE)
    ========================================================================== */
 .auth-wrapper {
   min-height: 100vh;

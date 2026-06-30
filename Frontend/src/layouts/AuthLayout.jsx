@@ -26,7 +26,7 @@ function AuthLayout({ children, headline, subtitle }) {
             <span className="font-mono text-success small fw-semibold d-flex align-items-center gap-2">
               <span className="workspace-dot"></span> Core.Ledger.System // Active
             </span>
-            <span className="text-muted style-none" style={{ fontSize: "0.7rem" }}>SECURE_NODE_TLS</span>
+            <span className="text-muted" style={{ fontSize: "0.7rem", textDecoration: "none" }}>SECURE_NODE_TLS</span>
           </div>
           
           <div className="mb-3">

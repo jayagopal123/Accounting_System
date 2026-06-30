@@ -56,7 +56,7 @@ function Dashboard() {
       case "PurchaseInvoice":
         return <span className="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25" style={{ fontSize: "0.6rem", fontWeight: 600 }}>Purchase Inv.</span>;
       case "JournalEntry":
-        return <span className="badge bg-purple bg-opacity-10 text-purple border border-purple border-opacity-25" style={{ fontSize: "0.6rem", fontWeight: 600 }}>Journal</span>;
+        return <span className="badge" style={{ fontSize: "0.6rem", fontWeight: 600, backgroundColor: "rgba(124, 58, 237, 0.1)", color: "#7c3aed", border: "1px solid rgba(124, 58, 237, 0.25)" }}>Journal</span>;
       default:
         return <span className="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25" style={{ fontSize: "0.6rem", fontWeight: 600 }}>{entity}</span>;
     }
@@ -114,11 +114,11 @@ function Dashboard() {
           <p className="text-muted small mb-0">Operational real-time balancing indexes and parameters.</p>
         </div>
         <div className="d-flex gap-2">
-          <button className="btn btn-outline-primary d-flex align-items-center gap-1.5 py-1.5 px-2.5">
+          <button className="btn btn-outline-primary d-flex align-items-center" style={{ gap: "0.375rem", padding: "0.375rem 0.75rem" }}>
             <FaCalendarAlt size={11} />
             <span>FY 2026-27</span>
           </button>
-          <button className="btn btn-outline-primary d-flex align-items-center gap-1.5 py-1.5 px-2.5">
+          <button className="btn btn-outline-primary d-flex align-items-center" style={{ gap: "0.375rem", padding: "0.375rem 0.75rem" }}>
             <FaSlidersH size={11} />
             <span>Filters</span>
           </button>

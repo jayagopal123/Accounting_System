@@ -114,6 +114,8 @@ class PurchaseInvoiceService {
       remarks: `Purchase Invoice ${invoice.invoiceNumber}`,
       totalDebit: invoice.grandTotal,
       totalCredit: invoice.grandTotal,
+      referenceType: "PurchaseInvoice",
+      referenceNumber: invoice.invoiceNumber,
       status: "Submitted",
       createdBy: invoice.createdBy,
       lineItems: [
@@ -155,6 +157,30 @@ class PurchaseInvoiceService {
         "Invoice already cancelled",
         "INVALID_STATUS"
       );
+    }
+
+    // If the invoice was already Submitted, also cancel the related Journal Entry
+    if (invoice.status === "Submitted") {
+      const relatedJournal = await journalEntryRepository.findOne({
+        referenceType: "PurchaseInvoice",
+        referenceNumber: invoice.invoiceNumber,
+        status: "Submitted"
+      });
+
+      if (relatedJournal) {
+        await journalEntryRepository.cancel(relatedJournal._id);
+
+        await activityLogService.logActivity({
+          action: "Cancelled",
+          entity: "JournalEntry",
+          entityId: relatedJournal._id,
+          entityName: relatedJournal.voucherNumber,
+          description: `Journal Entry ${relatedJournal.voucherNumber} was reversed due to cancellation of Purchase Invoice ${invoice.invoiceNumber}`,
+          category: "business",
+          performedBy: invoice.createdBy,
+          performedByName: "",
+        });
+      }
     }
 
     const cancelledInvoice = await purchaseInvoiceRepository.cancel(id);

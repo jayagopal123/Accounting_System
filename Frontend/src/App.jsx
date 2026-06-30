@@ -34,6 +34,21 @@ import EditSalesInvoicePage from "./pages/salesInvoices/EditSalesInvoicePage";
 import EditJournalEntryPage from "./pages/journalEntries/EditJournalEntryPage";
 import SystemLogsPage from "./pages/system-logs/SystemLogsPage";
 
+// ==========================================================================
+// FINANCIAL REPORTS IMPORTS
+// ==========================================================================
+import GeneralLedgerPage from "./pages/reports/GeneralLedgerPage";
+import TrialBalancePage from "./pages/reports/TrialBalancePage";
+import ProfitLossPage from "./pages/reports/ProfitLossPage";
+import BalanceSheetPage from "./pages/reports/BalanceSheetPage";
+import CashFlowPage from "./pages/reports/CashFlowPage";
+
+// ==========================================================================
+// PAYMENTS IMPORTS
+// ==========================================================================
+import PaymentListPage from "./pages/payments/PaymentListPage";
+import CreatePaymentPage from "./pages/payments/CreatePaymentPage";
+
 function App() {
   return (
     <AuthProvider>
@@ -65,6 +80,17 @@ function App() {
         <Route path="/sales-invoices/:id/edit" element={<ProtectedRoute><EditSalesInvoicePage /></ProtectedRoute>} />
         <Route path="/journal-entries/:id/edit" element={<ProtectedRoute><EditJournalEntryPage /></ProtectedRoute>} />
         <Route path="/system-logs" element={<ProtectedRoute><SystemLogsPage /></ProtectedRoute>} />
+        
+        {/* Financial Reports Routes */}
+        <Route path="/reports/general-ledger" element={<ProtectedRoute><GeneralLedgerPage /></ProtectedRoute>} />
+        <Route path="/reports/trial-balance" element={<ProtectedRoute><TrialBalancePage /></ProtectedRoute>} />
+        <Route path="/reports/profit-loss" element={<ProtectedRoute><ProfitLossPage /></ProtectedRoute>} />
+        <Route path="/reports/balance-sheet" element={<ProtectedRoute><BalanceSheetPage /></ProtectedRoute>} />
+        <Route path="/reports/cash-flow" element={<ProtectedRoute><CashFlowPage /></ProtectedRoute>} />
+        
+        {/* Payment Routes */}
+        <Route path="/payments" element={<ProtectedRoute><PaymentListPage /></ProtectedRoute>} />
+        <Route path="/payments/new" element={<ProtectedRoute><CreatePaymentPage /></ProtectedRoute>} />
         
         {/* Global Fallback Route */}
         <Route path="*" element={<Navigate to="/login" replace />} />

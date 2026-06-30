@@ -159,7 +159,7 @@ function LoginPage() {
             />
             <label
               htmlFor="remember"
-              className="text-muted select-none"
+              className="text-muted user-select-none"
               style={{ fontSize: "0.75rem", cursor: "pointer" }}
             >
               Keep workspace authenticated
