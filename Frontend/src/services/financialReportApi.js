@@ -41,6 +41,56 @@ export const getCashFlow = (params = {}) => {
   return api.get(`/reports/cash-flow${qs ? `?${qs}` : ""}`);
 };
 
+export const getSalesRegister = (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.startDate) query.set("startDate", params.startDate);
+  if (params.endDate) query.set("endDate", params.endDate);
+  if (params.customerId) query.set("customerId", params.customerId);
+  const qs = query.toString();
+  return api.get(`/reports/sales-register${qs ? `?${qs}` : ""}`);
+};
+
+export const getPurchaseRegister = (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.startDate) query.set("startDate", params.startDate);
+  if (params.endDate) query.set("endDate", params.endDate);
+  if (params.supplierId) query.set("supplierId", params.supplierId);
+  const qs = query.toString();
+  return api.get(`/reports/purchase-register${qs ? `?${qs}` : ""}`);
+};
+
+export const getCustomerStatement = (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.customerId) query.set("customerId", params.customerId);
+  if (params.startDate) query.set("startDate", params.startDate);
+  if (params.endDate) query.set("endDate", params.endDate);
+  const qs = query.toString();
+  return api.get(`/reports/customer-statement${qs ? `?${qs}` : ""}`);
+};
+
+export const getVendorStatement = (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.supplierId) query.set("supplierId", params.supplierId);
+  if (params.startDate) query.set("startDate", params.startDate);
+  if (params.endDate) query.set("endDate", params.endDate);
+  const qs = query.toString();
+  return api.get(`/reports/vendor-statement${qs ? `?${qs}` : ""}`);
+};
+
+export const getARAging = (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.asOfDate) query.set("asOfDate", params.asOfDate);
+  const qs = query.toString();
+  return api.get(`/reports/ar-aging${qs ? `?${qs}` : ""}`);
+};
+
+export const getAPAging = (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.asOfDate) query.set("asOfDate", params.asOfDate);
+  const qs = query.toString();
+  return api.get(`/reports/ap-aging${qs ? `?${qs}` : ""}`);
+};
+
 export const downloadReport = async (type, format, params = {}) => {
   const response = await api.get("/reports/export", {
     params: { type, format, ...params },

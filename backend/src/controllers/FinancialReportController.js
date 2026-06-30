@@ -73,6 +73,88 @@ class FinancialReportController {
     });
   });
 
+  getSalesRegister = catchAsync(async (req, res) => {
+    const { startDate, endDate, customerId } = req.query;
+    const data = await financialReportService.getSalesRegister({
+      startDate,
+      endDate,
+      customerId,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Sales Register retrieved successfully.",
+      data,
+    });
+  });
+
+  getPurchaseRegister = catchAsync(async (req, res) => {
+    const { startDate, endDate, supplierId } = req.query;
+    const data = await financialReportService.getPurchaseRegister({
+      startDate,
+      endDate,
+      supplierId,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Purchase Register retrieved successfully.",
+      data,
+    });
+  });
+
+  getCustomerStatement = catchAsync(async (req, res) => {
+    const { customerId, startDate, endDate } = req.query;
+    const data = await financialReportService.getCustomerStatement({
+      customerId,
+      startDate,
+      endDate,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Customer Statement retrieved successfully.",
+      data,
+    });
+  });
+
+  getVendorStatement = catchAsync(async (req, res) => {
+    const { supplierId, startDate, endDate } = req.query;
+    const data = await financialReportService.getVendorStatement({
+      supplierId,
+      startDate,
+      endDate,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Vendor Statement retrieved successfully.",
+      data,
+    });
+  });
+
+  getARAging = catchAsync(async (req, res) => {
+    const { asOfDate } = req.query;
+    const data = await financialReportService.getARAging({ asOfDate });
+
+    res.status(200).json({
+      success: true,
+      message: "AR Aging retrieved successfully.",
+      data,
+    });
+  });
+
+  getAPAging = catchAsync(async (req, res) => {
+    const { asOfDate } = req.query;
+    const data = await financialReportService.getAPAging({ asOfDate });
+
+    res.status(200).json({
+      success: true,
+      message: "AP Aging retrieved successfully.",
+      data,
+    });
+  });
+
   exportReport = catchAsync(async (req, res) => {
     const { type, format, startDate, endDate } = req.query;
 

@@ -84,6 +84,12 @@ import CreateTaxGroupPage from "./pages/tax/CreateTaxGroupPage";
 import EditTaxGroupPage from "./pages/tax/EditTaxGroupPage";
 import GSTR1Page from "./pages/reports/GSTR1Page";
 import GSTR3BPage from "./pages/reports/GSTR3BPage";
+import SalesRegisterPage from "./pages/reports/SalesRegisterPage";
+import PurchaseRegisterPage from "./pages/reports/PurchaseRegisterPage";
+import CustomerStatementPage from "./pages/reports/CustomerStatementPage";
+import VendorStatementPage from "./pages/reports/VendorStatementPage";
+import ARAgingPage from "./pages/reports/ARAgingPage";
+import APAgingPage from "./pages/reports/APAgingPage";
 
 // ==========================================================================
 // BANKING MODULE IMPORTS
@@ -105,6 +111,21 @@ import AssetListPage from "./pages/assets/AssetListPage";
 import CreateAssetPage from "./pages/assets/CreateAssetPage";
 import EditAssetPage from "./pages/assets/EditAssetPage";
 import AssetDetailPage from "./pages/assets/AssetDetailPage";
+
+// ==========================================================================
+// CREDIT / DEBIT NOTE IMPORTS
+// ==========================================================================
+import CreditNoteListPage from "./pages/creditNotes/CreditNoteListPage";
+import CreateCreditNotePage from "./pages/creditNotes/CreateCreditNotePage";
+import EditCreditNotePage from "./pages/creditNotes/EditCreditNotePage";
+import DebitNoteListPage from "./pages/debitNotes/DebitNoteListPage";
+import EditDebitNotePage from "./pages/debitNotes/EditDebitNotePage";
+import CreateDebitNotePage from "./pages/debitNotes/CreateDebitNotePage";
+
+// ==========================================================================
+// NOTIFICATIONS IMPORTS
+// ==========================================================================
+import NotificationListPage from "./pages/notifications/NotificationListPage";
 
 function App() {
   return (
@@ -181,6 +202,14 @@ function App() {
         <Route path="/reports/gstr-1" element={<ProtectedRoute><GSTR1Page /></ProtectedRoute>} />
         <Route path="/reports/gstr-3b" element={<ProtectedRoute><GSTR3BPage /></ProtectedRoute>} />
         
+        {/* Operational Report Routes */}
+        <Route path="/reports/sales-register" element={<ProtectedRoute><SalesRegisterPage /></ProtectedRoute>} />
+        <Route path="/reports/purchase-register" element={<ProtectedRoute><PurchaseRegisterPage /></ProtectedRoute>} />
+        <Route path="/reports/customer-statement" element={<ProtectedRoute><CustomerStatementPage /></ProtectedRoute>} />
+        <Route path="/reports/vendor-statement" element={<ProtectedRoute><VendorStatementPage /></ProtectedRoute>} />
+        <Route path="/reports/ar-aging" element={<ProtectedRoute><ARAgingPage /></ProtectedRoute>} />
+        <Route path="/reports/ap-aging" element={<ProtectedRoute><APAgingPage /></ProtectedRoute>} />
+        
         {/* Banking Module Routes */}
         <Route path="/bank-accounts" element={<ProtectedRoute><BankAccountListPage /></ProtectedRoute>} />
         <Route path="/bank-accounts/new" element={<ProtectedRoute><CreateBankAccountPage /></ProtectedRoute>} />
@@ -197,6 +226,17 @@ function App() {
         <Route path="/settings/asset-categories" element={<ProtectedRoute><AssetCategoryListPage /></ProtectedRoute>} />
         <Route path="/settings/asset-categories/new" element={<ProtectedRoute><CreateAssetCategoryPage /></ProtectedRoute>} />
         <Route path="/settings/asset-categories/:id/edit" element={<ProtectedRoute><EditAssetCategoryPage /></ProtectedRoute>} />
+        
+        {/* Credit / Debit Note Routes */}
+        <Route path="/credit-notes" element={<ProtectedRoute><CreditNoteListPage /></ProtectedRoute>} />
+        <Route path="/credit-notes/new" element={<ProtectedRoute><CreateCreditNotePage /></ProtectedRoute>} />
+        <Route path="/debit-notes" element={<ProtectedRoute><DebitNoteListPage /></ProtectedRoute>} />
+        <Route path="/debit-notes/new" element={<ProtectedRoute><CreateDebitNotePage /></ProtectedRoute>} />
+        <Route path="/credit-notes/:id/edit" element={<ProtectedRoute><EditCreditNotePage /></ProtectedRoute>} />
+        <Route path="/debit-notes/:id/edit" element={<ProtectedRoute><EditDebitNotePage /></ProtectedRoute>} />
+        
+        {/* Notifications Routes */}
+        <Route path="/notifications" element={<ProtectedRoute><NotificationListPage /></ProtectedRoute>} />
         
         {/* Global Fallback Route */}
         <Route path="*" element={<Navigate to="/login" replace />} />

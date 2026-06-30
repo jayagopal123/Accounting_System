@@ -27,6 +27,9 @@ import bankTransactionRoutes from "./routes/bankTransactionRoutes.js";
 import bankReconciliationRoutes from "./routes/bankReconciliationRoutes.js";
 import assetCategoryRoutes from "./routes/assetCategoryRoutes.js";
 import assetRoutes from "./routes/assetRoutes.js";
+import creditNoteRoutes from "./routes/creditNoteRoutes.js";
+import debitNoteRoutes from "./routes/debitNoteRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 import errorHandler from "./middleware/errorHandler.js";
 import ApiError from "./utils/ApiError.js";
@@ -62,8 +65,11 @@ app.use("/api/tax-groups", taxGroupRoutes);
 app.use("/api/bank-accounts", bankAccountRoutes);
 app.use("/api/bank-transactions", bankTransactionRoutes);
 app.use("/api/bank-reconciliation", bankReconciliationRoutes);
-app.use("/api/asset-categories", assetCategoryRoutes);
-app.use("/api/assets", assetRoutes);
+app.use("/api/asset-categories", assetCategoryRoutes);app.use("/api/assets", assetRoutes);
+app.use("/api/credit-notes", creditNoteRoutes);
+app.use("/api/debit-notes", debitNoteRoutes);
+app.use("/api/notifications", notificationRoutes);
+
 app.use("/api/reports/gst", gstrRoutes);
 
 app.use("*", (req, res, next) => {

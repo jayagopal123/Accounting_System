@@ -1,5 +1,10 @@
 import JournalEntry from "../models/JournalEntry.js";
 import Account from "../models/Account.js";
+import SalesInvoice from "../models/SalesInvoice.js";
+import PurchaseInvoice from "../models/PurchaseInvoice.js";
+import Payment from "../models/Payment.js";
+import CreditNote from "../models/CreditNote.js";
+import DebitNote from "../models/DebitNote.js";
 import ApiError from "../utils/ApiError.js";
 
 class FinancialReportService {
@@ -569,6 +574,398 @@ class FinancialReportService {
       openingCashBalance: 0,
       closingCashBalance: cashIncrease,
     };
+  }
+
+  // =========================================================================
+  // 8. Sales Register
+  // =========================================================================
+
+  async getSalesRegister(params = {}) {
+    const { startDate, endDate, customerId } = params;
+
+    const match = { status: "Submitted" };
+    if (startDate || endDate) {
+      match.invoiceDate = {};
+      if (startDate) match.invoiceDate.$gte = new Date(startDate);
+      if (endDate) match.invoiceDate.$lte = new Date(endDate);
+    }
+    if (customerId) match.customer = customerId;
+
+    const invoices = await SalesInvoice.find(match)
+      .populate("customer", "customerName customerCode gstNumber")
+      .sort({ invoiceDate: -1 })
+      .lean();
+
+    const summary = {
+      totalInvoices: invoices.length,
+      totalSubtotal: invoices.reduce((s, i) => s + i.subtotal, 0),
+      totalTax: invoices.reduce((s, i) => s + i.taxAmount, 0),
+      totalGrandTotal: invoices.reduce((s, i) => s + i.grandTotal, 0),
+    };
+
+    return { invoices, summary };
+  }
+
+  // =========================================================================
+  // 9. Purchase Register
+  // =========================================================================
+
+  async getPurchaseRegister(params = {}) {
+    const { startDate, endDate, supplierId } = params;
+
+    const match = { status: "Submitted" };
+    if (startDate || endDate) {
+      match.invoiceDate = {};
+      if (startDate) match.invoiceDate.$gte = new Date(startDate);
+      if (endDate) match.invoiceDate.$lte = new Date(endDate);
+    }
+    if (supplierId) match.supplier = supplierId;
+
+    const invoices = await PurchaseInvoice.find(match)
+      .populate("supplier", "supplierName supplierCode gstNumber")
+      .sort({ invoiceDate: -1 })
+      .lean();
+
+    const summary = {
+      totalInvoices: invoices.length,
+      totalSubtotal: invoices.reduce((s, i) => s + i.subtotal, 0),
+      totalTax: invoices.reduce((s, i) => s + i.taxAmount, 0),
+      totalGrandTotal: invoices.reduce((s, i) => s + i.grandTotal, 0),
+    };
+
+    return { invoices, summary };
+  }
+
+  // =========================================================================
+  // 10. Customer / Vendor Statement
+  // =========================================================================
+
+  async getCustomerStatement(params = {}) {
+    const { customerId, startDate, endDate } = params;
+
+    if (!customerId) {
+      throw new ApiError(400, "Customer ID is required", "MISSING_PARAM");
+    }
+
+    const invoiceDateFilter = {};
+    const paymentDateFilter = {};
+    const creditNoteDateFilter = {};
+    if (startDate || endDate) {
+      const gte = startDate ? new Date(startDate) : undefined;
+      const lte = endDate ? new Date(endDate) : undefined;
+      if (gte || lte) {
+        invoiceDateFilter.invoiceDate = {};
+        paymentDateFilter.paymentDate = {};
+        creditNoteDateFilter.creditNoteDate = {};
+        if (gte) {
+          invoiceDateFilter.invoiceDate.$gte = gte;
+          paymentDateFilter.paymentDate.$gte = gte;
+          creditNoteDateFilter.creditNoteDate.$gte = gte;
+        }
+        if (lte) {
+          invoiceDateFilter.invoiceDate.$lte = lte;
+          paymentDateFilter.paymentDate.$lte = lte;
+          creditNoteDateFilter.creditNoteDate.$lte = lte;
+        }
+      }
+    }
+
+    // Fetch all submitted sales invoices for this customer
+    const invoices = await SalesInvoice.find({
+      customer: customerId,
+      status: "Submitted",
+      ...invoiceDateFilter,
+    })
+      .sort({ invoiceDate: 1 })
+      .lean();
+
+    // Fetch all submitted payments for this customer
+    const payments = await Payment.find({
+      customer: customerId,
+      status: "Submitted",
+      ...(Object.keys(paymentDateFilter).length > 0 ? paymentDateFilter : {}),
+    })
+      .sort({ paymentDate: 1 })
+      .lean();
+
+    // Fetch all submitted credit notes for this customer
+    const creditNotes = await CreditNote.find({
+      customer: customerId,
+      status: "Submitted",
+      ...creditNoteDateFilter,
+    })
+      .sort({ creditNoteDate: 1 })
+      .lean();
+
+    // Build chronological transaction list
+    const transactions = [];
+
+    for (const inv of invoices) {
+      transactions.push({
+        date: inv.invoiceDate,
+        type: "Invoice",
+        reference: inv.invoiceNumber,
+        debit: inv.grandTotal,
+        credit: 0,
+        balance: 0,
+      });
+    }
+
+    for (const pmt of payments) {
+      transactions.push({
+        date: pmt.paymentDate,
+        type: "Payment",
+        reference: pmt.paymentNumber,
+        debit: 0,
+        credit: pmt.amount,
+        balance: 0,
+      });
+    }
+
+    for (const cn of creditNotes) {
+      transactions.push({
+        date: cn.creditNoteDate,
+        type: "Credit Note",
+        reference: cn.creditNoteNumber,
+        debit: 0,
+        credit: cn.grandTotal,
+        balance: 0,
+      });
+    }
+
+    // Sort by date and compute running balance
+    transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    let runningBalance = 0;
+    for (const txn of transactions) {
+      runningBalance += txn.debit - txn.credit;
+      txn.balance = runningBalance;
+    }
+
+    const totalInvoiced = transactions
+      .filter((t) => t.type === "Invoice")
+      .reduce((s, t) => s + t.debit, 0);
+    const totalPaid = transactions
+      .filter((t) => t.type === "Payment")
+      .reduce((s, t) => s + t.credit, 0);
+    const totalCredited = transactions
+      .filter((t) => t.type === "Credit Note")
+      .reduce((s, t) => s + t.credit, 0);
+
+    return {
+      transactions,
+      summary: {
+        totalInvoiced,
+        totalPaid,
+        totalCredited,
+        outstandingBalance: totalInvoiced - totalPaid - totalCredited,
+      },
+    };
+  }
+
+  async getVendorStatement(params = {}) {
+    const { supplierId, startDate, endDate } = params;
+
+    if (!supplierId) {
+      throw new ApiError(400, "Supplier ID is required", "MISSING_PARAM");
+    }
+
+    const invoiceDateFilter = {};
+    const paymentDateFilter = {};
+    const debitNoteDateFilter = {};
+    if (startDate || endDate) {
+      const gte = startDate ? new Date(startDate) : undefined;
+      const lte = endDate ? new Date(endDate) : undefined;
+      if (gte || lte) {
+        invoiceDateFilter.invoiceDate = {};
+        paymentDateFilter.paymentDate = {};
+        debitNoteDateFilter.debitNoteDate = {};
+        if (gte) {
+          invoiceDateFilter.invoiceDate.$gte = gte;
+          paymentDateFilter.paymentDate.$gte = gte;
+          debitNoteDateFilter.debitNoteDate.$gte = gte;
+        }
+        if (lte) {
+          invoiceDateFilter.invoiceDate.$lte = lte;
+          paymentDateFilter.paymentDate.$lte = lte;
+          debitNoteDateFilter.debitNoteDate.$lte = lte;
+        }
+      }
+    }
+
+    const invoices = await PurchaseInvoice.find({
+      supplier: supplierId,
+      status: "Submitted",
+      ...invoiceDateFilter,
+    })
+      .sort({ invoiceDate: 1 })
+      .lean();
+
+    const payments = await Payment.find({
+      supplier: supplierId,
+      status: "Submitted",
+      ...(Object.keys(paymentDateFilter).length > 0 ? paymentDateFilter : {}),
+    })
+      .sort({ paymentDate: 1 })
+      .lean();
+
+    const debitNotes = await DebitNote.find({
+      supplier: supplierId,
+      status: "Submitted",
+      ...debitNoteDateFilter,
+    })
+      .sort({ debitNoteDate: 1 })
+      .lean();
+
+    const transactions = [];
+
+    for (const inv of invoices) {
+      transactions.push({
+        date: inv.invoiceDate,
+        type: "Invoice",
+        reference: inv.invoiceNumber,
+        debit: inv.grandTotal,
+        credit: 0,
+        balance: 0,
+      });
+    }
+
+    for (const pmt of payments) {
+      transactions.push({
+        date: pmt.paymentDate,
+        type: "Payment",
+        reference: pmt.paymentNumber,
+        debit: 0,
+        credit: pmt.amount,
+        balance: 0,
+      });
+    }
+
+    for (const dn of debitNotes) {
+      transactions.push({
+        date: dn.debitNoteDate,
+        type: "Debit Note",
+        reference: dn.debitNoteNumber,
+        debit: 0,
+        credit: dn.grandTotal,
+        balance: 0,
+      });
+    }
+
+    transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    let runningBalance = 0;
+    for (const txn of transactions) {
+      runningBalance += txn.debit - txn.credit;
+      txn.balance = runningBalance;
+    }
+
+    const totalInvoiced = transactions
+      .filter((t) => t.type === "Invoice")
+      .reduce((s, t) => s + t.debit, 0);
+    const totalPaid = transactions
+      .filter((t) => t.type === "Payment")
+      .reduce((s, t) => s + t.credit, 0);
+    const totalDebited = transactions
+      .filter((t) => t.type === "Debit Note")
+      .reduce((s, t) => s + t.credit, 0);
+
+    return {
+      transactions,
+      summary: {
+        totalInvoiced,
+        totalPaid,
+        totalDebited,
+        outstandingBalance: totalInvoiced - totalPaid - totalDebited,
+      },
+    };
+  }
+
+  // =========================================================================
+  // 11. AR / AP Aging
+  // =========================================================================
+
+  async _buildAgingBuckets(invoices, populateField, asOf) {
+    // Batch-fetch all payments for these invoices in one query
+    const invoiceIds = invoices.map((inv) => inv._id);
+    const invoiceType = populateField === "customer" ? "SalesInvoice" : "PurchaseInvoice";
+
+    const allPayments = await Payment.find({
+      invoiceType,
+      invoice: { $in: invoiceIds },
+      status: "Submitted",
+    }).lean();
+
+    // Index payments by invoice ID
+    const paymentMap = {};
+    for (const pmt of allPayments) {
+      const key = pmt.invoice.toString();
+      paymentMap[key] = (paymentMap[key] || 0) + pmt.amount;
+    }
+
+    const buckets = {
+      "0-30": { label: "0-30 Days", amount: 0, invoices: [] },
+      "31-60": { label: "31-60 Days", amount: 0, invoices: [] },
+      "61-90": { label: "61-90 Days", amount: 0, invoices: [] },
+      "91-plus": { label: "91+ Days", amount: 0, invoices: [] },
+    };
+
+    for (const inv of invoices) {
+      const totalPaid = paymentMap[inv._id.toString()] || 0;
+      const outstanding = inv.grandTotal - totalPaid;
+      if (outstanding <= 0) continue;
+
+      const ageDays = Math.floor(
+        (asOf - new Date(inv.invoiceDate)) / (1000 * 60 * 60 * 24),
+      );
+
+      const bucketKey =
+        ageDays <= 30 ? "0-30" :
+        ageDays <= 60 ? "31-60" :
+        ageDays <= 90 ? "61-90" : "91-plus";
+
+      buckets[bucketKey].amount += outstanding;
+      buckets[bucketKey].invoices.push({
+        invoiceNumber: inv.invoiceNumber,
+        customerName: populateField === "customer"
+          ? (inv.customer?.customerName || "Unknown")
+          : (inv.supplier?.supplierName || "Unknown"),
+        supplierName: populateField === "supplier"
+          ? (inv.supplier?.supplierName || "Unknown")
+          : (inv.customer?.customerName || "Unknown"),
+        invoiceDate: inv.invoiceDate,
+        grandTotal: inv.grandTotal,
+        outstanding,
+        ageDays,
+      });
+    }
+
+    const totalOutstanding = Object.values(buckets).reduce((s, b) => s + b.amount, 0);
+    return { buckets, totalOutstanding };
+  }
+
+  async getARAging(params = {}) {
+    const { asOfDate } = params;
+    const asOf = asOfDate ? new Date(asOfDate) : new Date();
+
+    const invoices = await SalesInvoice.find({ status: "Submitted" })
+      .populate("customer", "customerName customerCode")
+      .sort({ invoiceDate: -1 })
+      .lean();
+
+    return this._buildAgingBuckets(invoices, "customer", asOf);
+  }
+
+  async getAPAging(params = {}) {
+    const { asOfDate } = params;
+    const asOf = asOfDate ? new Date(asOfDate) : new Date();
+
+    const invoices = await PurchaseInvoice.find({ status: "Submitted" })
+      .populate("supplier", "supplierName supplierCode")
+      .sort({ invoiceDate: -1 })
+      .lean();
+
+    return this._buildAgingBuckets(invoices, "supplier", asOf);
   }
 
   // =========================================================================

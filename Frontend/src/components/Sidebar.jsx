@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import {
+  FaBell,
   FaBook,
   FaBoxes,
   FaChartLine,
@@ -31,10 +32,18 @@ function Sidebar() {
     { to: "/reports/profit-loss", label: "Profit & Loss", icon: FaChartLine, section: "Reports" },
     { to: "/reports/balance-sheet", label: "Balance Sheet", icon: FaChartLine, section: "Reports" },
     { to: "/reports/cash-flow", label: "Cash Flow", icon: FaChartLine, section: "Reports" },
+    { to: "/reports/sales-register", label: "Sales Register", icon: FaChartLine, section: "Reports" },
+    { to: "/reports/purchase-register", label: "Purchase Register", icon: FaChartLine, section: "Reports" },
+    { to: "/reports/ar-aging", label: "AR Aging", icon: FaChartLine, section: "Reports" },
+    { to: "/reports/ap-aging", label: "AP Aging", icon: FaChartLine, section: "Reports" },
+    { to: "/reports/customer-statement", label: "Customer Statement", icon: FaChartLine, section: "Reports" },
+    { to: "/reports/vendor-statement", label: "Vendor Statement", icon: FaChartLine, section: "Reports" },
     { to: "/customers", label: "Customers", icon: FaUsers, section: "Masters" },
     { to: "/suppliers", label: "Suppliers", icon: FaPeopleCarry, section: "Masters" },
     { to: "/sales-invoices", label: "Sales Invoices", icon: FaChartLine, section: "Sales" },
+    { to: "/credit-notes", label: "Credit Notes", icon: FaFileSignature, section: "Sales" },
     { to: "/purchase-invoices", label: "Purchase Invoices", icon: FaFileInvoiceDollar, section: "Purchase" },
+    { to: "/debit-notes", label: "Debit Notes", icon: FaFileSignature, section: "Purchase" },
     { to: "/payments", label: "Payments & Receipts", icon: FaFileInvoiceDollar, section: "Purchase" },
     { to: "/bank-accounts", label: "Bank Accounts", icon: FaUniversity, section: "Banking" },
     { to: "/bank-transactions", label: "Bank Transactions", icon: FaMoneyCheckAlt, section: "Banking" },
@@ -51,6 +60,9 @@ function Sidebar() {
     { to: "/assets", label: "Fixed Assets", icon: FaIndustry, section: "Assets" },
     { to: "/settings/asset-categories", label: "Asset Categories", icon: FaCog, section: "Assets" },
   ];
+
+  // Notifications are always visible
+  navItems.push({ to: "/notifications", label: "Notifications", icon: FaBell, section: "Admin" });
 
   // Only show System Logs to users with audit_logs:view permission
   if (isAdmin) {

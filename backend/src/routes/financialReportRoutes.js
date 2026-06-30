@@ -35,6 +35,42 @@ router.get(
 );
 
 router.get(
+  "/sales-register",
+  authenticate,
+  financialReportController.getSalesRegister,
+);
+
+router.get(
+  "/purchase-register",
+  authenticate,
+  financialReportController.getPurchaseRegister,
+);
+
+router.get(
+  "/customer-statement",
+  authenticate,
+  financialReportController.getCustomerStatement,
+);
+
+router.get(
+  "/vendor-statement",
+  authenticate,
+  financialReportController.getVendorStatement,
+);
+
+router.get(
+  "/ar-aging",
+  authenticate,
+  financialReportController.getARAging,
+);
+
+router.get(
+  "/ap-aging",
+  authenticate,
+  financialReportController.getAPAging,
+);
+
+router.get(
   "/export",
   authenticate,
   financialReportController.exportReport,
