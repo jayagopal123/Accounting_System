@@ -1,15 +1,24 @@
 /**
- * ERP Data Seeding Script
- * ========================
+ * Comprehensive ERP Data Seeding Script
+ * ======================================
  * Populates the local MongoDB database with realistic, fully-related ERP data
- * including Chart of Accounts, Users, Roles, Customers, Suppliers,
- * Journal Entries, Sales Invoices, and Purchase Invoices.
+ * across ALL implemented modules. All references, business rules, balances,
+ * and accounting postings are consistent for end-to-end testing.
  *
- * All references, validations, and business rules are preserved:
- *   - Account parent/child hierarchy with type matching
- *   - Balanced journal entries (totalDebit === totalCredit)
- *   - Invoice auto-calculations (amount, subtotal, tax, grandTotal)
- *   - Proper ObjectId references across all documents
+ * Modules seeded:
+ *   - Permissions, Roles, Users (5 users)
+ *   - Chart of Accounts (hierarchical, 28 accounts)
+ *   - Customers (5), Suppliers (5)
+ *   - Tax Rates (CGST/SGST/IGST) & Tax Groups (GST @ 18%)
+ *   - Fiscal Year, Numbering Series, Cost Centers
+ *   - Currency Exchange Rates
+ *   - Journal Entries (11 entries, all balanced)
+ *   - Sales Invoices (5), Purchase Invoices (5)
+ *   - Credit Notes (2), Debit Notes (2)
+ *   - Payments (receipts + payments with bank transactions)
+ *   - Bank Accounts & Bank Transactions
+ *   - Asset Categories & Assets (3 categories, 4 assets)
+ *   - Notifications & Activity Logs
  *
  * Usage: node scripts/seed-erp-data.js
  */
@@ -29,6 +38,22 @@ import Supplier from "../src/models/Supplier.js";
 import JournalEntry from "../src/models/JournalEntry.js";
 import SalesInvoice from "../src/models/SalesInvoice.js";
 import PurchaseInvoice from "../src/models/PurchaseInvoice.js";
+import CreditNote from "../src/models/CreditNote.js";
+import DebitNote from "../src/models/DebitNote.js";
+import Payment from "../src/models/Payment.js";
+import TaxRate from "../src/models/TaxRate.js";
+import TaxGroup from "../src/models/TaxGroup.js";
+import FiscalYear from "../src/models/FiscalYear.js";
+import NumberingSeries from "../src/models/NumberingSeries.js";
+import CostCenter from "../src/models/CostCenter.js";
+import CurrencyExchangeRate from "../src/models/CurrencyExchangeRate.js";
+import Budget from "../src/models/Budget.js";
+import BankAccount from "../src/models/BankAccount.js";
+import BankTransaction from "../src/models/BankTransaction.js";
+import AssetCategory from "../src/models/AssetCategory.js";
+import Asset from "../src/models/Asset.js";
+import Notification from "../src/models/Notification.js";
+import ActivityLog from "../src/models/ActivityLog.js";
 
 // ==========================================================================
 // Seed Data Definitions
@@ -413,6 +438,22 @@ const seed = async () => {
       JournalEntry.deleteMany({}),
       SalesInvoice.deleteMany({}),
       PurchaseInvoice.deleteMany({}),
+      CreditNote.deleteMany({}),
+      DebitNote.deleteMany({}),
+      Payment.deleteMany({}),
+      TaxRate.deleteMany({}),
+      TaxGroup.deleteMany({}),
+      FiscalYear.deleteMany({}),
+      NumberingSeries.deleteMany({}),
+      CostCenter.deleteMany({}),
+      CurrencyExchangeRate.deleteMany({}),
+      Budget.deleteMany({}),
+      BankAccount.deleteMany({}),
+      BankTransaction.deleteMany({}),
+      AssetCategory.deleteMany({}),
+      Asset.deleteMany({}),
+      Notification.deleteMany({}),
+      ActivityLog.deleteMany({}),
     ]);
     console.log("All collections cleared.\n");
 
@@ -958,21 +999,749 @@ const seed = async () => {
     console.log(`  Created ${purchaseInvoices.length} purchase invoices.\n`);
 
     // ──────────────────────────────────────────────────────────────────────
+    // STEP 10: Tax Rates (GST)
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 10: Seeding Tax Rates ---");
+
+    const taxRatesData = [
+      { taxName: "CGST 9%", taxCode: "CGST9", rate: 9, taxType: "CGST", effectiveFrom: new Date("2024-01-01"), description: "Central GST at 9%", isActive: true, createdBy: adminId },
+      { taxName: "SGST 9%", taxCode: "SGST9", rate: 9, taxType: "SGST", effectiveFrom: new Date("2024-01-01"), description: "State GST at 9%", isActive: true, createdBy: adminId },
+      { taxName: "IGST 18%", taxCode: "IGST18", rate: 18, taxType: "IGST", effectiveFrom: new Date("2024-01-01"), description: "Integrated GST at 18%", isActive: true, createdBy: adminId },
+      { taxName: "CGST 6%", taxCode: "CGST6", rate: 6, taxType: "CGST", effectiveFrom: new Date("2024-01-01"), description: "Central GST at 6%", isActive: true, createdBy: adminId },
+      { taxName: "SGST 6%", taxCode: "SGST6", rate: 6, taxType: "SGST", effectiveFrom: new Date("2024-01-01"), description: "State GST at 6%", isActive: true, createdBy: adminId },
+    ];
+
+    const taxRates = await TaxRate.insertMany(taxRatesData);
+    console.log(`  Created ${taxRates.length} tax rates.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 11: Tax Groups
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 11: Seeding Tax Groups ---");
+
+    // Find CGST 9% and SGST 9% rates
+    const cgst9 = taxRates.find(r => r.taxCode === "CGST9")._id;
+    const sgst9 = taxRates.find(r => r.taxCode === "SGST9")._id;
+    const igst18 = taxRates.find(r => r.taxCode === "IGST18")._id;
+
+    const taxGroupsData = [
+      {
+        groupName: "GST 18% (CGST 9% + SGST 9%)",
+        groupCode: "GST18",
+        taxes: [{ taxRate: cgst9 }, { taxRate: sgst9 }],
+        description: "Standard GST at 18% (9% CGST + 9% SGST) for intra-state supplies",
+        isActive: true,
+        createdBy: adminId,
+      },
+      {
+        groupName: "IGST 18%",
+        groupCode: "IGST18",
+        taxes: [{ taxRate: igst18 }],
+        description: "Integrated GST at 18% for inter-state supplies",
+        isActive: true,
+        createdBy: adminId,
+      },
+    ];
+
+    const taxGroups = await TaxGroup.insertMany(taxGroupsData);
+    console.log(`  Created ${taxGroups.length} tax groups.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 12: Fiscal Year
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 12: Seeding Fiscal Year ---");
+
+    const fiscalYearsData = [
+      {
+        yearName: "FY 2024-2025",
+        startDate: new Date("2024-04-01"),
+        endDate: new Date("2025-03-31"),
+        status: "Active",
+        isDefault: true,
+        description: "Financial Year 2024-2025",
+        createdBy: adminId,
+      },
+    ];
+
+    const fiscalYears = await FiscalYear.insertMany(fiscalYearsData);
+    const fiscalYear = fiscalYears[0];
+    console.log(`  Created ${fiscalYears.length} fiscal year.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 13: Numbering Series
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 13: Seeding Numbering Series ---");
+
+    const numberingSeriesData = [
+      { documentType: "Account", prefix: "AC", startingNumber: 1, padLength: 4, description: "Auto-generated account codes", isActive: true, createdBy: adminId },
+      { documentType: "Customer", prefix: "CUST", startingNumber: 6, padLength: 3, description: "Auto-generated customer codes", isActive: true, createdBy: adminId },
+      { documentType: "Supplier", prefix: "SUPP", startingNumber: 6, padLength: 3, description: "Auto-generated supplier codes", isActive: true, createdBy: adminId },
+      { documentType: "JournalEntry", prefix: "JE", startingNumber: 12, padLength: 5, description: "Auto-generated voucher numbers", isActive: true, createdBy: adminId },
+      { documentType: "SalesInvoice", prefix: "SI", startingNumber: 6, padLength: 5, description: "Auto-generated sales invoice numbers", isActive: true, createdBy: adminId },
+      { documentType: "PurchaseInvoice", prefix: "PI", startingNumber: 6, padLength: 5, description: "Auto-generated purchase invoice numbers", isActive: true, createdBy: adminId },
+      { documentType: "Payment", prefix: "PMT", startingNumber: 1, padLength: 5, description: "Auto-generated payment numbers", isActive: true, createdBy: adminId },
+    ];
+
+    const numberingSeries = await NumberingSeries.insertMany(numberingSeriesData);
+    console.log(`  Created ${numberingSeries.length} numbering series.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 14: Cost Centers
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 14: Seeding Cost Centers ---");
+
+    const costCentersData = [
+      { code: "CC-IT", name: "Information Technology", description: "IT department cost center", status: "Active", createdBy: adminId },
+      { code: "CC-SALES", name: "Sales & Marketing", description: "Sales and marketing department", status: "Active", createdBy: adminId },
+      { code: "CC-ADMIN", name: "Administration", description: "General administration cost center", status: "Active", createdBy: adminId },
+      { code: "CC-OPS", name: "Operations", description: "Operations and production cost center", status: "Active", createdBy: adminId },
+    ];
+
+    const costCenters = await CostCenter.insertMany(costCentersData);
+    console.log(`  Created ${costCenters.length} cost centers.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 15: Currency Exchange Rates
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 15: Seeding Currency Exchange Rates ---");
+
+    const exchangeRatesData = [
+      { fromCurrency: "USD", toCurrency: "INR", rate: 83.50, effectiveDate: new Date("2024-01-01"), isActive: true, createdBy: adminId },
+      { fromCurrency: "EUR", toCurrency: "INR", rate: 90.20, effectiveDate: new Date("2024-01-01"), isActive: true, createdBy: adminId },
+      { fromCurrency: "GBP", toCurrency: "INR", rate: 105.75, effectiveDate: new Date("2024-01-01"), isActive: true, createdBy: adminId },
+      { fromCurrency: "INR", toCurrency: "USD", rate: 0.012, effectiveDate: new Date("2024-01-01"), isActive: true, createdBy: adminId },
+    ];
+
+    const exchangeRates = await CurrencyExchangeRate.insertMany(exchangeRatesData);
+    console.log(`  Created ${exchangeRates.length} currency exchange rates.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 16: Budget
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 16: Seeding Budget ---");
+
+    const budgetData = {
+      name: "Annual Operating Budget FY 2024-2025",
+      fiscalYear: fiscalYear._id,
+      costCenter: costCenters[2]._id, // Admin
+      status: "Approved",
+      lineItems: [
+        { account: ac5101, amount: 3840000, notes: "Annual salary budget (12 months × ₹3,20,000)" },
+        { account: ac5102, amount: 600000, notes: "Annual rent (₹50,000 × 12 months)" },
+        { account: ac5103, amount: 180000, notes: "Annual utilities (₹15,000 × 12 months)" },
+        { account: accountMap["5104"]._id, amount: 120000, notes: "Annual office supplies" },
+      ],
+      description: "Comprehensive operating budget for the financial year 2024-2025",
+      createdBy: adminId,
+    };
+
+    // Calculate total
+    budgetData.totalAmount = budgetData.lineItems.reduce((s, i) => s + i.amount, 0);
+
+    const budgets = await Budget.create(budgetData);
+    console.log(`  Created 1 budget with ${budgetData.lineItems.length} line items.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 17: Bank Accounts
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 17: Seeding Bank Accounts ---");
+
+    const bankAccountsData = [
+      {
+        accountName: "HDFC Current Account",
+        accountNumber: "HDFC00012345678",
+        bankName: "HDFC Bank",
+        branchName: "MG Road Branch, Bangalore",
+        ifscCode: "HDFC0001234",
+        accountType: "Current",
+        openingBalance: 0,
+        currentBalance: 0,
+        currency: "INR",
+        isActive: true,
+        description: "Primary business current account",
+        createdBy: adminId,
+      },
+      {
+        accountName: "ICICI Current Account",
+        accountNumber: "ICICI00098765432",
+        bankName: "ICICI Bank",
+        branchName: "Indiranagar Branch, Bangalore",
+        ifscCode: "ICIC0009876",
+        accountType: "Current",
+        openingBalance: 0,
+        currentBalance: 0,
+        currency: "INR",
+        isActive: true,
+        description: "Secondary business current account",
+        createdBy: adminId,
+      },
+    ];
+
+    const bankAccounts = await BankAccount.insertMany(bankAccountsData);
+    console.log(`  Created ${bankAccounts.length} bank accounts.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 18: Bank Transactions
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 18: Seeding Bank Transactions ---");
+
+    const bankTransactionsData = [
+      {
+        bankAccount: bankAccounts[0]._id,
+        transactionDate: new Date("2024-01-01"),
+        transactionType: "Deposit",
+        amount: 5000000,
+        description: "Initial capital deposit",
+        referenceType: "JournalEntry",
+        referenceNumber: "JE-00001",
+        paymentMethod: "Bank Transfer",
+        status: "Cleared",
+        reconciliationStatus: "Reconciled",
+        createdBy: adminId,
+      },
+      {
+        bankAccount: bankAccounts[0]._id,
+        transactionDate: new Date("2024-01-05"),
+        transactionType: "Withdrawal",
+        amount: 750000,
+        description: "Office equipment purchase",
+        referenceType: "JournalEntry",
+        referenceNumber: "JE-00002",
+        paymentMethod: "Bank Transfer",
+        status: "Cleared",
+        reconciliationStatus: "Reconciled",
+        createdBy: accountantUser._id,
+      },
+      {
+        bankAccount: bankAccounts[0]._id,
+        transactionDate: new Date("2024-01-15"),
+        transactionType: "Withdrawal",
+        amount: 320000,
+        description: "Salary payment for January",
+        referenceType: "JournalEntry",
+        referenceNumber: "JE-00004",
+        paymentMethod: "Bank Transfer",
+        status: "Cleared",
+        reconciliationStatus: "Reconciled",
+        createdBy: accountantUser._id,
+      },
+      {
+        bankAccount: bankAccounts[0]._id,
+        transactionDate: new Date("2024-01-20"),
+        transactionType: "Withdrawal",
+        amount: 150000,
+        description: "Office rent payment for Q1",
+        referenceType: "JournalEntry",
+        referenceNumber: "JE-00005",
+        paymentMethod: "Bank Transfer",
+        status: "Cleared",
+        reconciliationStatus: "Reconciled",
+        createdBy: accountantUser._id,
+      },
+      {
+        bankAccount: bankAccounts[0]._id,
+        transactionDate: new Date("2024-02-05"),
+        transactionType: "Withdrawal",
+        amount: 45000,
+        description: "Electricity and internet bills",
+        referenceType: "JournalEntry",
+        referenceNumber: "JE-00007",
+        paymentMethod: "Bank Transfer",
+        status: "Cleared",
+        reconciliationStatus: "Unreconciled",
+        createdBy: juniorAcctUser._id,
+      },
+      {
+        bankAccount: bankAccounts[0]._id,
+        transactionDate: new Date("2024-02-15"),
+        transactionType: "Deposit",
+        amount: 236000,
+        description: "Payment received from TechVision Solutions",
+        referenceType: "JournalEntry",
+        referenceNumber: "JE-00009",
+        paymentMethod: "Cheque",
+        chequeNumber: "CHQ-001234",
+        chequeDate: new Date("2024-02-14"),
+        status: "Cleared",
+        reconciliationStatus: "Unreconciled",
+        createdBy: accountantUser._id,
+      },
+      {
+        bankAccount: bankAccounts[0]._id,
+        transactionDate: new Date("2024-03-05"),
+        transactionType: "Deposit",
+        amount: 15000,
+        description: "Interest earned on fixed deposit",
+        referenceType: "JournalEntry",
+        referenceNumber: "JE-00011",
+        paymentMethod: "Online",
+        status: "Cleared",
+        reconciliationStatus: "Unreconciled",
+        createdBy: juniorAcctUser._id,
+      },
+    ];
+
+    // Calculate the HDFC account balance from transactions
+    const hdfcBalance = bankAccountsData[0].openingBalance +
+      bankTransactionsData.filter(t => t.transactionType === "Deposit").reduce((s, t) => s + t.amount, 0) -
+      bankTransactionsData.filter(t => t.transactionType === "Withdrawal").reduce((s, t) => s + t.amount, 0);
+
+    // Update HDFC account balance
+    await BankAccount.updateOne({ _id: bankAccounts[0]._id }, { currentBalance: hdfcBalance });
+
+    const bankTransactions = await BankTransaction.insertMany(bankTransactionsData);
+    console.log(`  Created ${bankTransactions.length} bank transactions.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 19: Asset Categories & Assets
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 19: Seeding Asset Categories & Assets ---");
+
+    const assetCatData = [
+      {
+        categoryCode: "AC-IT",
+        categoryName: "IT Equipment",
+        description: "Computers, servers, and IT infrastructure",
+        defaultUsefulLife: 36,
+        defaultDepreciationMethod: "StraightLine",
+        defaultSalvageValuePercent: 5,
+        glAccount: accountMap["1301"]._id,
+        depreciationExpenseAccount: accountMap["5100"]._id,
+        accumulatedDepreciationAccount: accountMap["1301"]._id,
+        isActive: true,
+        createdBy: adminId,
+      },
+      {
+        categoryCode: "AC-OFFICE",
+        categoryName: "Office Furniture",
+        description: "Office desks, chairs, and furniture",
+        defaultUsefulLife: 60,
+        defaultDepreciationMethod: "StraightLine",
+        defaultSalvageValuePercent: 5,
+        glAccount: accountMap["1302"]._id,
+        depreciationExpenseAccount: accountMap["5100"]._id,
+        accumulatedDepreciationAccount: accountMap["1302"]._id,
+        isActive: true,
+        createdBy: adminId,
+      },
+      {
+        categoryCode: "AC-VEHICLE",
+        categoryName: "Vehicles",
+        description: "Company vehicles and transportation",
+        defaultUsefulLife: 84,
+        defaultDepreciationMethod: "WrittenDownValue",
+        defaultSalvageValuePercent: 10,
+        glAccount: accountMap["1300"]._id,
+        depreciationExpenseAccount: accountMap["5100"]._id,
+        accumulatedDepreciationAccount: accountMap["1300"]._id,
+        isActive: true,
+        createdBy: adminId,
+      },
+    ];
+
+    const assetCategories = await AssetCategory.insertMany(assetCatData);
+
+    const assetsData = [
+      {
+        assetCode: "AST-001",
+        assetName: "Dell PowerEdge Server R740",
+        description: "Primary production server with 64GB RAM, 4TB storage",
+        category: assetCategories[0]._id,
+        purchaseDate: new Date("2024-01-15"),
+        purchaseCost: 450000,
+        usefulLife: 36,
+        depreciationMethod: "StraightLine",
+        salvageValue: 22500,
+        currentValue: 439375,
+        accumulatedDepreciation: 10625,
+        lastDepreciationDate: new Date("2024-03-31"),
+        nextDepreciationDate: new Date("2024-04-30"),
+        glAccount: accountMap["1301"]._id,
+        depreciationExpenseAccount: accountMap["5100"]._id,
+        accumulatedDepreciationAccount: accountMap["1301"]._id,
+        status: "Active",
+        location: "Server Room, 2nd Floor",
+        assignedTo: "IT Team",
+        vendorName: "TechConnect IT Distributors",
+        invoiceNumber: "PI-00003",
+        serialNumber: "DL-PE-R740-2024-001",
+        createdBy: adminId,
+      },
+      {
+        assetCode: "AST-002",
+        assetName: "Office Workstations Bundle",
+        description: "10 ergonomic workstations with chairs and desks",
+        category: assetCategories[1]._id,
+        purchaseDate: new Date("2024-01-05"),
+        purchaseCost: 350000,
+        usefulLife: 60,
+        depreciationMethod: "StraightLine",
+        salvageValue: 17500,
+        currentValue: 344458,
+        accumulatedDepreciation: 5542,
+        lastDepreciationDate: new Date("2024-03-31"),
+        nextDepreciationDate: new Date("2024-04-30"),
+        glAccount: accountMap["1302"]._id,
+        depreciationExpenseAccount: accountMap["5100"]._id,
+        accumulatedDepreciationAccount: accountMap["1302"]._id,
+        status: "Active",
+        location: "Office Floor 1 & 2",
+        assignedTo: "All Departments",
+        vendorName: "Global Industrial Supplies",
+        invoiceNumber: "PI-00001",
+        serialNumber: "OW-BNDL-2024-001",
+        createdBy: adminId,
+      },
+      {
+        assetCode: "AST-003",
+        assetName: "Company Car - Toyota Innova",
+        description: "Company vehicle for executive transport",
+        category: assetCategories[2]._id,
+        purchaseDate: new Date("2024-01-20"),
+        purchaseCost: 1200000,
+        usefulLife: 84,
+        depreciationMethod: "WrittenDownValue",
+        salvageValue: 120000,
+        currentValue: 1171429,
+        accumulatedDepreciation: 28571,
+        lastDepreciationDate: new Date("2024-03-31"),
+        nextDepreciationDate: new Date("2024-04-30"),
+        glAccount: accountMap["1300"]._id,
+        depreciationExpenseAccount: accountMap["5100"]._id,
+        accumulatedDepreciationAccount: accountMap["1300"]._id,
+        status: "Active",
+        location: "Company Parking",
+        assignedTo: "Executive Team",
+        vendorName: "Global Industrial Supplies",
+        invoiceNumber: "PI-00001",
+        serialNumber: "TOY-INN-2024-001",
+        createdBy: adminId,
+      },
+      {
+        assetCode: "AST-004",
+        assetName: "Networking Equipment Bundle",
+        description: "Cisco switches, routers, and firewall appliances",
+        category: assetCategories[0]._id,
+        purchaseDate: new Date("2024-02-01"),
+        purchaseCost: 300000,
+        usefulLife: 36,
+        depreciationMethod: "StraightLine",
+        salvageValue: 15000,
+        currentValue: 289583,
+        accumulatedDepreciation: 10417,
+        lastDepreciationDate: new Date("2024-03-31"),
+        nextDepreciationDate: new Date("2024-04-30"),
+        glAccount: accountMap["1301"]._id,
+        depreciationExpenseAccount: accountMap["5100"]._id,
+        accumulatedDepreciationAccount: accountMap["1301"]._id,
+        status: "Active",
+        location: "Server Room, 2nd Floor",
+        assignedTo: "IT Team",
+        vendorName: "TechConnect IT Distributors",
+        invoiceNumber: "PI-00003",
+        serialNumber: "CISCO-NET-2024-001",
+        createdBy: adminId,
+      },
+    ];
+
+    const assets = await Asset.insertMany(assetsData);
+    console.log(`  Created ${assetCategories.length} asset categories and ${assets.length} assets.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 20: Credit Notes
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 20: Seeding Credit Notes ---");
+
+    const creditNotesData = [
+      {
+        creditNoteNumber: "CN-00001",
+        customer: customerDocs[1]._id, // GreenLeaf Retail
+        invoice: salesInvoices[1]._id, // SI-00002
+        creditNoteDate: new Date("2024-02-15"),
+        items: [
+          { itemName: "POS Software License (Return - 1 defective unit)", quantity: 1, rate: 12000, amount: 12000 },
+        ],
+        subtotal: 12000,
+        taxAmount: 2160,
+        grandTotal: 14160,
+        reason: "Defective POS software license - returned by customer",
+        status: "Submitted",
+        createdBy: accountantUser._id,
+      },
+      {
+        creditNoteNumber: "CN-00002",
+        customer: customerDocs[3]._id, // Eastern Exports
+        creditNoteDate: new Date("2024-03-01"),
+        items: [
+          { itemName: "Compliance Dashboard - Partial discount adjustment", quantity: 1, rate: 10000, amount: 10000 },
+        ],
+        subtotal: 10000,
+        taxAmount: 1800,
+        grandTotal: 11800,
+        reason: "Goodwill discount on compliance dashboard - early payment incentive",
+        status: "Draft",
+        createdBy: juniorAcctUser._id,
+      },
+    ];
+
+    const creditNotes = await CreditNote.insertMany(creditNotesData);
+    console.log(`  Created ${creditNotes.length} credit notes.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 21: Debit Notes
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 21: Seeding Debit Notes ---");
+
+    const debitNotesData = [
+      {
+        debitNoteNumber: "DN-00001",
+        supplier: supplierDocs[0]._id, // Global Industrial
+        invoice: purchaseInvoices[0]._id, // PI-00001
+        debitNoteDate: new Date("2024-02-20"),
+        items: [
+          { itemName: "Steel Sheets Grade 304 - Damaged goods return", quantity: 5, rate: 3500, amount: 17500 },
+        ],
+        subtotal: 17500,
+        taxAmount: 3150,
+        grandTotal: 20650,
+        reason: "Damaged steel sheets returned - quality issue",
+        status: "Submitted",
+        createdBy: accountantUser._id,
+      },
+      {
+        debitNoteNumber: "DN-00002",
+        supplier: supplierDocs[1]._id, // OfficePro Stationers
+        debitNoteDate: new Date("2024-03-10"),
+        items: [
+          { itemName: "Printer Paper - Incorrect specification return", quantity: 5, rate: 500, amount: 2500 },
+        ],
+        subtotal: 2500,
+        taxAmount: 450,
+        grandTotal: 2950,
+        reason: "Incorrect paper size delivered - awaiting replacement",
+        status: "Draft",
+        createdBy: juniorAcctUser._id,
+      },
+    ];
+
+    const debitNotes = await DebitNote.insertMany(debitNotesData);
+    console.log(`  Created ${debitNotes.length} debit notes.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 22: Payments (Receipts & Payments)
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 22: Seeding Payments ---");
+
+    const paymentsData = [
+      {
+        paymentNumber: "RCT-00001",
+        paymentType: "Receipt",
+        invoiceType: "SalesInvoice",
+        invoice: salesInvoices[0]._id, // SI-00001 from TechVision
+        customer: customerDocs[0]._id,
+        amount: 236000,
+        paymentDate: new Date("2024-02-15"),
+        paymentMethod: "Cheque",
+        referenceNumber: "CHQ-001234",
+        account: ac1202, // Bank Account
+        remarks: "Payment received for SI-00001",
+        status: "Submitted",
+        createdBy: accountantUser._id,
+      },
+      {
+        paymentNumber: "PMT-00001",
+        paymentType: "Payment",
+        invoiceType: "PurchaseInvoice",
+        invoice: purchaseInvoices[2]._id, // PI-00003 TechConnect
+        supplier: supplierDocs[2]._id,
+        amount: 500000,
+        paymentDate: new Date("2024-03-15"),
+        paymentMethod: "Bank Transfer",
+        referenceNumber: "NEFT-20240315",
+        account: ac1202, // Bank Account
+        remarks: "Partial payment for PI-00003 - IT equipment",
+        status: "Submitted",
+        createdBy: accountantUser._id,
+      },
+      {
+        paymentNumber: "PMT-00002",
+        paymentType: "Payment",
+        invoiceType: "PurchaseInvoice",
+        invoice: purchaseInvoices[0]._id, // PI-00001 Global Industrial
+        supplier: supplierDocs[0]._id,
+        amount: 300000,
+        paymentDate: new Date("2024-03-01"),
+        paymentMethod: "Bank Transfer",
+        referenceNumber: "NEFT-20240301",
+        account: ac1202, // Bank Account
+        remarks: "Partial payment for PI-00001 - raw materials",
+        status: "Draft",
+        createdBy: juniorAcctUser._id,
+      },
+    ];
+
+    const payments = await Payment.insertMany(paymentsData);
+    console.log(`  Created ${payments.length} payments.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 23: Notifications
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 23: Seeding Notifications ---");
+
+    const notificationsData = [
+      {
+        recipient: accountantUser._id,
+        type: "invoice_created",
+        title: "Sales Invoice Created",
+        message: "Sales Invoice SI-00004 has been created for Eastern Exports (₹2,95,000).",
+        entityType: "SalesInvoice",
+        entityId: salesInvoices[3]._id,
+        isRead: true,
+        createdAt: new Date("2024-02-20"),
+      },
+      {
+        recipient: managerUser._id,
+        type: "invoice_submitted",
+        title: "Invoice Requires Approval",
+        message: "Purchase Invoice PI-00003 (₹6,53,720) from TechConnect IT Distributors needs manager approval.",
+        entityType: "PurchaseInvoice",
+        entityId: purchaseInvoices[2]._id,
+        isRead: false,
+        createdAt: new Date("2024-03-01"),
+      },
+      {
+        recipient: accountantUser._id,
+        type: "payment_received",
+        title: "Payment Received",
+        message: "₹2,36,000 received from TechVision Solutions via Cheque CHQ-001234.",
+        entityType: "Payment",
+        isRead: false,
+        createdAt: new Date("2024-02-15"),
+      },
+      {
+        recipient: adminId,
+        type: "system_alert",
+        title: "Budget Utilization Alert",
+        message: "Salary expenses for FY 2024-2025 have reached 25% of the annual budget.",
+        entityType: "Budget",
+        isRead: false,
+        createdAt: new Date("2024-03-31"),
+      },
+      {
+        recipient: accountantUser._id,
+        type: "journal_submitted",
+        title: "Journal Entry Posted",
+        message: "Journal Entry JE-00011 (Interest Income ₹15,000) has been posted successfully.",
+        entityType: "JournalEntry",
+        isRead: true,
+        createdAt: new Date("2024-03-05"),
+      },
+      {
+        recipient: juniorAcctUser._id,
+        type: "credit_note_issued",
+        title: "Credit Note Issued",
+        message: "Credit Note CN-00001 (₹14,160) issued to GreenLeaf Retail for defective POS software.",
+        entityType: "CreditNote",
+        entityId: creditNotes[0]._id,
+        isRead: false,
+        createdAt: new Date("2024-02-15"),
+      },
+    ];
+
+    const notifications = await Notification.insertMany(notificationsData);
+    console.log(`  Created ${notifications.length} notifications.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
+    // STEP 24: Activity Logs
+    // ──────────────────────────────────────────────────────────────────────
+    console.log("--- STEP 24: Seeding Activity Logs ---");
+
+    const activityLogsData = [
+      {
+        action: "Seeded",
+        entity: "System",
+        description: "ERP seed data script executed - all modules populated with realistic test data",
+        category: "business",
+        performedBy: adminId,
+        performedByName: "System Admin",
+        metadata: { seedScript: "seed-erp-data.js", seededAt: new Date() },
+      },
+      {
+        action: "Created",
+        entity: "User",
+        entityName: "accountant@company.com",
+        description: "User account created for Arun Kumar (ACCOUNTANT)",
+        category: "security",
+        performedBy: adminId,
+        performedByName: "System Admin",
+      },
+      {
+        action: "Submitted",
+        entity: "JournalEntry",
+        entityId: journalEntries[0]._id,
+        entityName: "JE-00001",
+        description: "Opening balance entry (₹50,00,000) - Capital contribution posted",
+        category: "business",
+        performedBy: adminId,
+        performedByName: "System Admin",
+      },
+      {
+        action: "Submitted",
+        entity: "SalesInvoice",
+        entityId: salesInvoices[0]._id,
+        entityName: "SI-00001",
+        description: "Sales Invoice SI-00001 (₹2,36,000) submitted for TechVision Solutions",
+        category: "business",
+        performedBy: accountantUser._id,
+        performedByName: "Arun Kumar",
+      },
+      {
+        action: "Submitted",
+        entity: "PurchaseInvoice",
+        entityId: purchaseInvoices[0]._id,
+        entityName: "PI-00001",
+        description: "Purchase Invoice PI-00001 (₹5,90,000) submitted from Global Industrial Supplies",
+        category: "business",
+        performedBy: accountantUser._id,
+        performedByName: "Arun Kumar",
+      },
+    ];
+
+    const activityLogs = await ActivityLog.insertMany(activityLogsData);
+    console.log(`  Created ${activityLogs.length} activity logs.\n`);
+
+    // ──────────────────────────────────────────────────────────────────────
     // Summary
     // ──────────────────────────────────────────────────────────────────────
-    console.log("╔══════════════════════════════════════════╗");
-    console.log("║        ERP DATA SEEDING COMPLETE         ║");
-    console.log("╠══════════════════════════════════════════╣");
-    console.log(`║  Permissions:         ${String(seededPermissions.length).padStart(4)}                     ║`);
-    console.log(`║  Roles:               4                     ║`);
-    console.log(`║  Users:               5                     ║`);
-    console.log(`║  Accounts:            ${String(Object.keys(accountMap).length).padStart(4)}                     ║`);
-    console.log(`║  Customers:           ${String(customerDocs.length).padStart(4)}                     ║`);
-    console.log(`║  Suppliers:           ${String(supplierDocs.length).padStart(4)}                     ║`);
-    console.log(`║  Journal Entries:     ${String(journalEntries.length).padStart(4)}                     ║`);
-    console.log(`║  Sales Invoices:      ${String(salesInvoices.length).padStart(4)}                     ║`);
-    console.log(`║  Purchase Invoices:   ${String(purchaseInvoices.length).padStart(4)}                     ║`);
-    console.log("╚══════════════════════════════════════════╝\n");
+    console.log("╔══════════════════════════════════════════════════════════╗");
+    console.log("║              ERP DATA SEEDING COMPLETE                   ║");
+    console.log("╠══════════════════════════════════════════════════════════╣");
+    console.log(`║  Permissions:          ${String(seededPermissions.length).padStart(4)}                                ║`);
+    console.log(`║  Roles:                4                                ║`);
+    console.log(`║  Users:                5                                ║`);
+    console.log(`║  Chart of Accounts:    ${String(Object.keys(accountMap).length).padStart(4)}                                ║`);
+    console.log(`║  Customers:            ${String(customerDocs.length).padStart(4)}                                ║`);
+    console.log(`║  Suppliers:            ${String(supplierDocs.length).padStart(4)}                                ║`);
+    console.log(`║  Tax Rates:            ${String(taxRates.length).padStart(4)}                                ║`);
+    console.log(`║  Tax Groups:           ${String(taxGroups.length).padStart(4)}                                ║`);
+    console.log(`║  Fiscal Years:         ${String(fiscalYears.length).padStart(4)}                                ║`);
+    console.log(`║  Numbering Series:     ${String(numberingSeries.length).padStart(4)}                                ║`);
+    console.log(`║  Cost Centers:         ${String(costCenters.length).padStart(4)}                                ║`);
+    console.log(`║  Exchange Rates:       ${String(exchangeRates.length).padStart(4)}                                ║`);
+    console.log(`║  Budgets:              1                                ║`);
+    console.log(`║  Bank Accounts:        ${String(bankAccounts.length).padStart(4)}                                ║`);
+    console.log(`║  Bank Transactions:    ${String(bankTransactions.length).padStart(4)}                                ║`);
+    console.log(`║  Asset Categories:     ${String(assetCategories.length).padStart(4)}                                ║`);
+    console.log(`║  Assets:               ${String(assets.length).padStart(4)}                                ║`);
+    console.log(`║  Journal Entries:      ${String(journalEntries.length).padStart(4)}                                ║`);
+    console.log(`║  Sales Invoices:       ${String(salesInvoices.length).padStart(4)}                                ║`);
+    console.log(`║  Purchase Invoices:    ${String(purchaseInvoices.length).padStart(4)}                                ║`);
+    console.log(`║  Credit Notes:         ${String(creditNotes.length).padStart(4)}                                ║`);
+    console.log(`║  Debit Notes:          ${String(debitNotes.length).padStart(4)}                                ║`);
+    console.log(`║  Payments:             ${String(payments.length).padStart(4)}                                ║`);
+    console.log(`║  Notifications:        ${String(notifications.length).padStart(4)}                                ║`);
+    console.log(`║  Activity Logs:        ${String(activityLogs.length).padStart(4)}                                ║`);
+    console.log("╚══════════════════════════════════════════════════════════╝\n");
 
     console.log("Test Credentials:");
     console.log("  admin@company.com     / AdminPassword123!  (SYSTEM_ADMIN)");

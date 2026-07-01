@@ -1,64 +1,100 @@
- import React from "react";
-import { FaBoxes } from "react-icons/fa";
+import React from "react";
+import { FaBoxes, FaUsers, FaBriefcase, FaChartLine, FaShieldAlt } from "react-icons/fa";
 
 function AuthLayout({ children, headline, subtitle }) {
   return (
     <div className="auth-wrapper">
-      {/* Left Column: Monolith Architecture Brand Engine */}
-      <div className="auth-brand-side d-flex flex-column justify-content-between">
+      {/* ── LEFT PANEL: Dark enterprise brand side ── */}
+      <div className="auth-brand-side">
         <div className="auth-grid-bg"></div>
         <div className="auth-glow-orb"></div>
 
-        {/* Corporate Header */}
-        <div className="d-flex align-items-center gap-3 position-relative" style={{ zIndex: 2 }}>
-          <div className="bg-success bg-opacity-10 text-success rounded p-2 d-flex align-items-center justify-content-center" style={{ border: "1px solid rgba(5, 150, 105, 0.2)" }}>
-            <FaBoxes size={20} />
-          </div>
-          <div>
-            <div className="fw-bold text-white fs-5" style={{ letterSpacing: "0.03em" }}>Isaii Ledger</div>
-            <div className="text-muted" style={{ fontSize: "0.75rem" }}>Enterprise ERP Workspace</div>
-          </div>
-        </div>
-
-        {/* Abstract Financial Telemetry Terminal */}
-        <div className="auth-illustration-box position-relative" style={{ zIndex: 2 }}>
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <span className="font-mono text-success small fw-semibold d-flex align-items-center gap-2">
-              <span className="workspace-dot"></span> Core.Ledger.System // Active
+        <div className="auth-brand-inner">
+          {/* Brand pill */}
+          <div className="auth-brand-pill">
+            <span className="auth-brand-pill-icon">
+              <FaBoxes size={10} />
             </span>
-            <span className="text-muted" style={{ fontSize: "0.7rem", textDecoration: "none" }}>SECURE_NODE_TLS</span>
-          </div>
-          
-          <div className="mb-3">
-            <div className="text-secondary small mb-1 font-mono">System Asset Throughput</div>
-            <div className="metric-strip"><div className="metric-strip-fill" style={{ width: "78%" }}></div></div>
-          </div>
-          <div>
-            <div className="text-secondary small mb-1 font-mono">Realtime Ledger Synchronization</div>
-            <div className="metric-strip"><div className="metric-strip-fill" style={{ width: "92%", backgroundColor: "#3b82f6" }}></div></div>
+            <span>GRAM ERP</span>
           </div>
 
-          <div className="mt-4 pt-3 border-top border-secondary border-opacity-10 d-flex justify-content-between">
-            <span className="text-muted font-mono" style={{ fontSize: "0.65rem" }}>SYS.ERRORS: 0</span>
-            <span className="text-muted font-mono" style={{ fontSize: "0.65rem" }}>PING: 12ms</span>
-          </div>
-        </div>
+          {/* Banner image */}
+          <img
+            src="https://app.getsview.getsenviro.com/GRAM/banner.png"
+            alt="GRAM ERP"
+            className="auth-banner-img"
+          />
 
-        {/* Brand Promise Footer Quote */}
-        <div className="position-relative" style={{ zIndex: 2 }}>
-          <p className="text-white-50 small mb-0 fw-light" style={{ lineHeight: "1.6", maxWidth: "420px" }}>
-            "Automate critical dual-entry ledgers, optimize fiscal compliance configurations, and orchestrate double-entry audit trials securely at absolute scale."
+          {/* Large wordmark */}
+          <h1 className="auth-brand-wordmark">
+            Business.{" "}
+            <span className="highlight">Simplified.</span>
+          </h1>
+
+          {/* Description */}
+          <p className="auth-brand-desc">
+            Streamline your financial operations with enterprise-grade
+            accounting, reporting, and compliance tools.
           </p>
+
+          {/* Feature cards */}
+          <div className="auth-features">
+            <div className="auth-feature-card">
+              <div className="auth-feature-icon">
+                <FaUsers size={16} />
+              </div>
+              <div className="auth-feature-text">
+                <h4>People</h4>
+                <p>Manage employees, roles, and team permissions</p>
+              </div>
+            </div>
+
+            <div className="auth-feature-card">
+              <div className="auth-feature-icon">
+                <FaBriefcase size={16} />
+              </div>
+              <div className="auth-feature-text">
+                <h4>Work</h4>
+                <p>Track projects, tasks, and operational workflows</p>
+              </div>
+            </div>
+
+            <div className="auth-feature-card">
+              <div className="auth-feature-icon">
+                <FaChartLine size={16} />
+              </div>
+              <div className="auth-feature-text">
+                <h4>Reports</h4>
+                <p>Generate financial statements and real-time insights</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Security badge */}
+          <div className="auth-security-badge">
+            <FaShieldAlt size={12} />
+            <span>Protected by enterprise-grade security</span>
+          </div>
         </div>
       </div>
 
-      {/* Right Column: Dynamic Form Workspace */}
+      {/* ── RIGHT PANEL: Form card side ── */}
       <div className="auth-form-side">
         <div className="auth-card-shell">
-          <div className="mb-4">
-            <h2 className="fw-bold text-dark tracking-tight mb-1" style={{ fontSize: "1.5rem" }}>{headline}</h2>
-            <p className="text-muted small">{subtitle}</p>
+          {/* Brand logo in card */}
+          <div className="auth-card-brand">
+            <div className="auth-card-brand-icon">
+              <FaBoxes size={18} />
+            </div>
+            <div>
+              <div className="auth-card-brand-text">Isaii Ledger</div>
+              <div className="auth-card-brand-sub">Enterprise ERP Platform</div>
+            </div>
           </div>
+
+          {headline && <h2 className="auth-heading">{headline}</h2>}
+          {subtitle && <p className="auth-subtitle">{subtitle}</p>}
+
           {children}
         </div>
       </div>

@@ -20,53 +20,55 @@ function ForgotPasswordPage() {
   };
 
   return (
-    <AuthLayout headline="Recover Security Key" subtitle="Initiate secure node token sequence dispatch.">
+    <AuthLayout headline="Reset password" subtitle="Enter your email to receive a password reset link.">
       {!submitted ? (
         <form onSubmit={handleRecover}>
-          <div className="mb-4">
-            <label className="form-label">Enterprise Email Route</label>
+          <div className="auth-input-wrapper">
+            <label>Email</label>
             <input
               type="email"
-              className="form-control"
-              placeholder="name@company.com"
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
             />
-            <div className="text-muted mt-2" style={{ fontSize: "0.7rem", lineHeight: "1.4" }}>
-              A temporary cryptographic secure reset matrix link will be routed to verified system registry emails only.
-            </div>
           </div>
 
-          <button type="submit" className="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2 mb-3" style={{ height: "38px" }} disabled={loading}>
+          <p className="auth-security-text" style={{ textAlign: "left", marginTop: "-0.5rem", marginBottom: "1.25rem" }}>
+            A secure password reset link will be sent to your registered email.
+          </p>
+
+          <button type="submit" className="auth-submit-btn" disabled={loading}>
             {loading ? (
               <>
-                <FaCircleNotch className="spinner-border-sm animate-spin" style={{ animation: "spin 1s linear infinite" }} />
-                <span>Routing Dispatch Node...</span>
+                <FaCircleNotch className="auth-spinner" size={16} />
+                <span>Sending...</span>
               </>
             ) : (
-              <span>Send Recovery Link</span>
+              <span>Send Reset Link</span>
             )}
           </button>
 
-          <div className="text-center">
-            <Link to="/login" className="text-muted small fw-medium" style={{ fontSize: "0.75rem" }}>
-              ← Return to Authentication Console
+          <div className="text-center mt-3">
+            <Link to="/login" className="auth-footer-link">
+              Back to Sign In
             </Link>
           </div>
         </form>
       ) : (
         <div className="text-center py-2">
-          <div className="text-success fs-3 mb-2">
+          <div className="text-success mb-2" style={{ fontSize: "2rem" }}>
             <FaCheckCircle />
           </div>
-          <h5 className="fw-bold text-dark small text-uppercase tracking-wider mb-2">Recovery Grid Dispatched</h5>
-          <p className="text-muted small mb-4" style={{ lineHeight: "1.5" }}>
-            Check inbound enterprise directory pipeline logs at <strong className="text-dark">{email}</strong> to verify token payload signatures.
+          <h5 className="fw-bold" style={{ fontSize: "0.9rem", color: "#0f172a", marginBottom: "0.5rem" }}>
+            Reset Link Sent
+          </h5>
+          <p className="text-muted" style={{ fontSize: "0.75rem", lineHeight: "1.6", marginBottom: "1.5rem" }}>
+            Check your inbox at <strong style={{ color: "#0f172a" }}>{email}</strong> for instructions.
           </p>
-          <Link to="/login" className="btn btn-outline-primary w-100">
-            Return to Login
+          <Link to="/login" className="auth-submit-btn" style={{ textDecoration: "none" }}>
+            Return to Sign In
           </Link>
         </div>
       )}

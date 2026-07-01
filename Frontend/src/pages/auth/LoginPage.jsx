@@ -7,6 +7,8 @@ import {
   FaCircleNotch,
   FaCheckCircle,
   FaExclamationCircle,
+  FaEye,
+  FaEyeSlash,
 } from "react-icons/fa";
 
 function LoginPage() {
@@ -20,6 +22,7 @@ function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   // UX State Simulation Parameters
   const [loading, setLoading] = useState(false);
@@ -45,8 +48,6 @@ function LoginPage() {
         },
       );
 
-      console.log(response.data);
-
       const { token, user } = response.data.data;
 
       localStorage.setItem("token", token);
@@ -58,8 +59,6 @@ function LoginPage() {
         navigate("/");
       }, 800);
     } catch (err) {
-      console.error(err);
-
       setError(err.response?.data?.message || "Invalid email or password.");
     } finally {
       setLoading(false);
@@ -68,124 +67,94 @@ function LoginPage() {
 
   return (
     <AuthLayout
-      headline="Sign In"
-      subtitle="Access your corporate accounting instance logs."
+      headline="Welcome back"
+      subtitle="Sign in to access your GRAM workspace."
     >
       <form onSubmit={handleSubmit} noValidate>
-        {/* Banner Alert Notification States */}
+        {/* Alerts */}
         {error && (
-          <div
-            className="alert alert-danger p-2 small border-0 d-flex align-items-center gap-2 mb-3"
-            style={{
-              fontSize: "0.75rem",
-              backgroundColor: "#fef2f2",
-              color: "#991b1b",
-            }}
-          >
-            <FaExclamationCircle className="flex-shrink-0" />
+          <div className="auth-alert auth-alert-error">
+            <FaExclamationCircle className="flex-shrink-0" size={12} />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div
-            className="alert alert-success p-2 small border-0 d-flex align-items-center gap-2 mb-3"
-            style={{
-              fontSize: "0.75rem",
-              backgroundColor: "#ecfdf5",
-              color: "#065f46",
-            }}
-          >
-            <FaCheckCircle className="flex-shrink-0" />
-            <span>
-              Session cryptographic authorization verified. Redirecting...
-            </span>
+          <div className="auth-alert auth-alert-success">
+            <FaCheckCircle className="flex-shrink-0" size={12} />
+            <span>Signed in successfully. Redirecting...</span>
           </div>
         )}
 
-        {/* Input Block: Account Email */}
-        <div className="mb-3">
-          <label className="form-label">Enterprise Email</label>
-          <div className="auth-input-group">
-            <input
-              type="email"
-              className={`form-control ${error && !email.includes("@") ? "is-invalid" : ""}`}
-              placeholder="name@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading || success}
-              required
-            />
-          </div>
+        {/* Email */}
+        <div className="auth-input-wrapper">
+          <label>Email</label>
+          <input
+            type="email"
+            placeholder="you@company.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={loading || success}
+            required
+            autoComplete="email"
+          />
         </div>
 
-        {/* Input Block: Security Signature Key */}
-        <div className="mb-3">
-          <div className="d-flex justify-content-between align-items-center mb-1">
-            <label className="form-label mb-0">Password</label>
-            <Link
-              to="/forgot-password"
-              style={{
-                fontSize: "0.725rem",
-                color: "#059669",
-                fontWeight: "600",
-              }}
-            >
-              Forgot Key?
+        {/* Password */}
+        <div className="auth-input-wrapper">
+          <div className="d-flex justify-content-between align-items-center">
+            <label>Password</label>
+            <Link to="/forgot-password" className="auth-forgot-link">
+              Forgot password?
             </Link>
           </div>
-          <div className="auth-input-group">
+          <div style={{ position: "relative" }}>
             <input
-              type="password"
-              className="form-control"
-              placeholder="••••••••"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading || success}
               required
+              autoComplete="current-password"
             />
-          </div>
-        </div>
-
-        {/* Persist Context Operations Checkbox */}
-        <div className="d-flex align-items-center justify-content-between mb-4">
-          <div className="form-check d-flex align-items-center gap-2 m-0 p-0">
-            <input
-              type="checkbox"
-              id="remember"
-              className="form-check-input m-0"
-              style={{ cursor: "pointer", width: "14px", height: "14px" }}
-              disabled={loading || success}
-            />
-            <label
-              htmlFor="remember"
-              className="text-muted user-select-none"
-              style={{ fontSize: "0.75rem", cursor: "pointer" }}
+            <button
+              type="button"
+              className="auth-password-toggle"
+              onClick={() => setShowPassword(!showPassword)}
+              tabIndex={-1}
             >
-              Keep workspace authenticated
-            </label>
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
           </div>
         </div>
 
-        {/* Trigger Submission Module Button */}
+        {/* Remember me */}
+        <div className="auth-checkbox-wrapper d-flex align-items-center gap-2">
+          <input type="checkbox" id="remember" disabled={loading || success} />
+          <label htmlFor="remember">Remember me</label>
+        </div>
+
+        {/* Submit button */}
         <button
           type="submit"
-          className="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2"
-          style={{ height: "38px" }}
+          className="auth-submit-btn"
           disabled={loading || success}
         >
           {loading ? (
             <>
-              <FaCircleNotch
-                className="spinner-border-sm animate-spin"
-                style={{ animation: "spin 1s linear infinite" }}
-              />
-              <span>Verifying Node Logins...</span>
+              <FaCircleNotch className="auth-spinner" size={16} />
+              <span>Signing in...</span>
             </>
           ) : (
-            <span>Authenticate Session</span>
+            <span>Get Started →</span>
           )}
         </button>
+
+        {/* Security text */}
+        <p className="auth-security-text">
+          Protected by enterprise-grade security
+        </p>
       </form>
     </AuthLayout>
   );
