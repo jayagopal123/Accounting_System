@@ -70,11 +70,6 @@ const supplierSchema = new mongoose.Schema(
       trim: true
     },
 
-    defaultCurrency: {
-      type: String,
-      default: "INR"
-    },
-
     company: {
       type: String,
       trim: true

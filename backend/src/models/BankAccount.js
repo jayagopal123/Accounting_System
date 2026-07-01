@@ -46,11 +46,6 @@ const bankAccountSchema = new mongoose.Schema(
       default: 0,
     },
 
-    currency: {
-      type: String,
-      default: "INR",
-    },
-
     isActive: {
       type: Boolean,
       default: true,

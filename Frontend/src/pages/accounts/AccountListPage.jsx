@@ -102,7 +102,6 @@ function AccountListPage() {
                 <th>Code</th>
                 <th>Account Name</th>
                 <th>Type</th>
-                <th>Currency</th>
                 <th>Amount</th>
                 <th>Status</th>
                 <th className="text-end">Actions</th>
@@ -111,7 +110,7 @@ function AccountListPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-5">
+                  <td colSpan="6" className="text-center py-5">
                     <div className="d-flex flex-column align-items-center gap-2">
                       <div className="spinner-border text-secondary" role="status" aria-hidden="true" style={{ width: "1.25rem", height: "1.25rem" }} />
                       <span className="text-muted small">Loading accounts...</span>
@@ -120,7 +119,7 @@ function AccountListPage() {
                 </tr>
               ) : filteredAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-5">
+                  <td colSpan="6" className="text-center py-5">
                     <div className="d-flex flex-column align-items-center gap-2">
                       <div className="empty-state-icon">
                         <BsBook size={18} />
@@ -141,8 +140,7 @@ function AccountListPage() {
                         color: account.accountType === 'ASSET' ? '#047857' : account.accountType === 'LIABILITY' ? '#854d0e' : account.accountType === 'EQUITY' ? '#1e40af' : account.accountType === 'INCOME' ? '#6d28d9' : '#be185d'
                       }}>{account.accountType}</span>
                     </td>
-                    <td className="font-mono text-muted">{account.currency}</td>
-                    <td className="font-mono fw-semibold text-end">{account.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0.00"}</td>
+                    <td className="font-mono fw-semibold text-end">{account.amount ? account.amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"}</td>
                     <td>
                       <span className={`badge-premium ${account.status === "ACTIVE" ? "badge-premium-active" : "badge-premium-cancelled"}`}>
                         {account.status}

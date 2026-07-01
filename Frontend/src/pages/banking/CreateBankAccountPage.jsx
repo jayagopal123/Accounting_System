@@ -17,7 +17,6 @@ function CreateBankAccountPage() {
     ifscCode: "",
     accountType: "Current",
     openingBalance: "",
-    currency: "INR",
     description: "",
   });
 
@@ -143,19 +142,6 @@ function CreateBankAccountPage() {
                 onChange={(e) => handleChange("ifscCode", e.target.value)}
                 placeholder="e.g. HDFC0001234"
               />
-            </div>
-            <div className="col-md-4">
-              <label className="form-label">Currency</label>
-              <select
-                className="form-select"
-                value={formData.currency}
-                onChange={(e) => handleChange("currency", e.target.value)}
-              >
-                <option value="INR">INR (₹)</option>
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="GBP">GBP (£)</option>
-              </select>
             </div>
             <div className="col-md-6">
               <label className="form-label">Opening Balance</label>

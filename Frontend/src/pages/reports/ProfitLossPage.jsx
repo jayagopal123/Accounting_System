@@ -4,6 +4,7 @@ import {
   getProfitAndLoss,
   downloadReport,
 } from "../../services/financialReportApi";
+import { formatMoney } from "../../utils/formatMoney";
 
 function ProfitLossPage() {
   const [data, setData] = useState(null);
@@ -147,9 +148,7 @@ function ProfitLossPage() {
                             {acc.accountName}
                           </td>
                           <td className="text-end font-mono fw-semibold">
-                            {acc.balance.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                            })}
+                            {formatMoney(acc.balance, { noSymbol: true })}
                           </td>
                         </tr>
                       ))
@@ -159,9 +158,7 @@ function ProfitLossPage() {
                         Total {data.income.label}
                       </td>
                       <td className="text-end fw-bold font-mono" style={{ color: "#166534" }}>
-                        {data.income.total.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })}
+                        {formatMoney(data.income.total, { noSymbol: true })}
                       </td>
                     </tr>
                   </tbody>
@@ -202,9 +199,7 @@ function ProfitLossPage() {
                             {acc.accountName}
                           </td>
                           <td className="text-end font-mono fw-semibold">
-                            {acc.balance.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                            })}
+                            {formatMoney(acc.balance, { noSymbol: true })}
                           </td>
                         </tr>
                       ))
@@ -214,9 +209,7 @@ function ProfitLossPage() {
                         Total {data.expenses.label}
                       </td>
                       <td className="text-end fw-bold font-mono" style={{ color: "#991b1b" }}>
-                        {data.expenses.total.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })}
+                        {formatMoney(data.expenses.total, { noSymbol: true })}
                       </td>
                     </tr>
                   </tbody>
@@ -246,9 +239,7 @@ function ProfitLossPage() {
                   }}
                 >
                   {data.netProfit >= 0 ? "+" : ""}
-                  {data.netProfit.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
+                  {formatMoney(Math.abs(data.netProfit), { noSymbol: true })}
                 </span>
               </div>
             </div>

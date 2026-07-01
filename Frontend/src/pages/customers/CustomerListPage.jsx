@@ -47,7 +47,7 @@ function CustomerListPage() {
     }
   };
 
-  const colSpan = 5 + (canUpdate || canDelete ? 1 : 0);
+  const colSpan = 4 + (canUpdate || canDelete ? 1 : 0);
 
   return (
     <MainLayout>
@@ -76,7 +76,6 @@ function CustomerListPage() {
                 <th>Code</th>
                 <th>Name</th>
                 <th>Company</th>
-                <th>Currency</th>
                 <th>Status</th>
                 {canUpdate || canDelete ? <th className="text-end">Actions</th> : null}
               </tr>
@@ -102,7 +101,6 @@ function CustomerListPage() {
                   <td className="fw-semibold font-mono">{customer.customerCode}</td>
                   <td className="fw-medium">{customer.customerName}</td>
                   <td className="text-muted">{customer.company || "—"}</td>
-                  <td className="font-mono">{customer.defaultCurrency}</td>
                   <td><span className={`badge-premium ${customer.status === "Active" ? "badge-premium-active" : "badge-premium-blocked"}`}>{customer.status}</span></td>
                   {canUpdate || canDelete ? (
                     <td className="text-end">

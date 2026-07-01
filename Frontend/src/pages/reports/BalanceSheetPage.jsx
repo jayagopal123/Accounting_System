@@ -4,6 +4,7 @@ import {
   getBalanceSheet,
   downloadReport,
 } from "../../services/financialReportApi";
+import { formatMoney } from "../../utils/formatMoney";
 
 function BalanceSheetPage() {
   const [data, setData] = useState(null);
@@ -72,9 +73,7 @@ function BalanceSheetPage() {
                   {acc.accountName}
                 </td>
                 <td className="text-end font-mono fw-semibold">
-                  {Math.abs(acc.balance).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
+                  {formatMoney(Math.abs(acc.balance), { noSymbol: true })}
                 </td>
               </tr>
             ))
@@ -87,9 +86,7 @@ function BalanceSheetPage() {
               className="text-end fw-bold font-mono"
               style={{ color }}
             >
-              {Math.abs(total).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-              })}
+              {formatMoney(Math.abs(total), { noSymbol: true })}
             </td>
           </tr>
         </tbody>
@@ -183,11 +180,11 @@ function BalanceSheetPage() {
                 {data.totals.isBalanced ? "✓ BALANCED" : "✗ NOT BALANCED"}
               </span>
               <span className="text-muted small">
-                Assets ({data.totals.totalAssets.toLocaleString(undefined, {minimumFractionDigits: 2})})
+                Assets ({formatMoney(data.totals.totalAssets, { noSymbol: true })})
                 {" = "}
-                Liabilities ({data.totals.totalLiabilities.toLocaleString(undefined, {minimumFractionDigits: 2})})
+                Liabilities ({formatMoney(data.totals.totalLiabilities, { noSymbol: true })})
                 {" + "}
-                Equity ({data.totals.totalEquity.toLocaleString(undefined, {minimumFractionDigits: 2})})
+                Equity ({formatMoney(data.totals.totalEquity, { noSymbol: true })})
               </span>
             </div>
 

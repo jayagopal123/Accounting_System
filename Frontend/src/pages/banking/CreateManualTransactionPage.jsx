@@ -127,8 +127,8 @@ function CreateManualTransactionPage() {
                 <option value="">Select bank account</option>
                 {bankAccounts.map((acc) => (
                   <option key={acc._id} value={acc._id}>
-                    {acc.accountName} - {acc.bankName} ({acc.currency}{" "}
-                    {acc.currentBalance?.toLocaleString(undefined, {
+                    {acc.accountName} - {acc.bankName} (₹{" "}
+                    {acc.currentBalance?.toLocaleString("en-IN", {
                       minimumFractionDigits: 2,
                     })}
                     )

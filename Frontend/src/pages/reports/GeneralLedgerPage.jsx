@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import MainLayout from "../../layouts/MainLayout";
-import { getAccounts } from "../../services/accountApi";
-import {
+import { getAccounts } from "../../services/accountApi";import {
   getGeneralLedger,
   downloadReport,
 } from "../../services/financialReportApi";
+import { formatMoney } from "../../utils/formatMoney";
 
 function GeneralLedgerPage() {
   const [data, setData] = useState(null);
@@ -159,15 +159,11 @@ function GeneralLedgerPage() {
               <small className="text-muted">
                 {data.summary.totalEntries} entries · Total Debits:{" "}
                 <span className="fw-semibold font-mono">
-                  {data.summary.totalDebits.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
+                  {formatMoney(data.summary.totalDebits)}
                 </span>{" "}
                 · Total Credits:{" "}
                 <span className="fw-semibold font-mono">
-                  {data.summary.totalCredits.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
+                  {formatMoney(data.summary.totalCredits)}
                 </span>
               </small>
             </div>
@@ -211,16 +207,12 @@ function GeneralLedgerPage() {
                         </td>
                         <td className="text-end font-mono">
                           {entry.debit
-                            ? entry.debit.toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                              })
+                            ? formatMoney(entry.debit, { noSymbol: true })
                             : "—"}
                         </td>
                         <td className="text-end font-mono">
                           {entry.credit
-                            ? entry.credit.toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                              })
+                            ? formatMoney(entry.credit, { noSymbol: true })
                             : "—"}
                         </td>
                         <td
@@ -235,9 +227,7 @@ function GeneralLedgerPage() {
                           {entry.description || "—"}
                         </td>
                         <td className="text-end font-mono fw-semibold">
-                          {entry.runningBalance.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                          })}
+                          {formatMoney(entry.runningBalance, { noSymbol: true })}
                         </td>
                       </tr>
                     ))

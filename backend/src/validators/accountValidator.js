@@ -20,8 +20,6 @@ const createAccountSchema = Joi.object({
 
   isGroup: Joi.boolean(),
 
-  currency: Joi.string(),
-
   description: Joi.string()
 });
 

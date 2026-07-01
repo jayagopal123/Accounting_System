@@ -9,6 +9,7 @@ import {
   verifyReconciliation,
 } from "../../services/bankReconciliationApi";
 import { BsBank, BsCheckLg, BsPlusLg, BsShieldCheck } from "react-icons/bs";
+import { formatMoney } from "../../utils/formatMoney";
 
 function BankReconciliationPage() {
   const navigate = useNavigate();
@@ -176,8 +177,8 @@ function BankReconciliationPage() {
                         .map((acc) => (
                           <option key={acc._id} value={acc._id}>
                             {acc.accountName} - {acc.bankName} (Balance:{" "}
-                            {acc.currency}{" "}
-                            {acc.currentBalance?.toLocaleString(undefined, {
+                            ₹{" "}
+                            {acc.currentBalance?.toLocaleString("en-IN", {
                               minimumFractionDigits: 2,
                             })}
                             )
@@ -356,14 +357,10 @@ function BankReconciliationPage() {
                       {new Date(rec.statementEndDate).toLocaleDateString()}
                     </td>
                     <td className="text-end font-mono">
-                      {rec.systemBalance?.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                      })}
+                      {formatMoney(rec.systemBalance, { noSymbol: true })}
                     </td>
                     <td className="text-end font-mono">
-                      {rec.closingBalance?.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                      })}
+                      {formatMoney(rec.closingBalance, { noSymbol: true })}
                     </td>
                     <td className="text-end font-mono">
                       <span
@@ -374,9 +371,7 @@ function BankReconciliationPage() {
                         }
                       >
                         {rec.difference >= 0 ? "+" : ""}
-                        {rec.difference?.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })}
+                        {formatMoney(Math.abs(rec.difference), { noSymbol: true })}
                       </span>
                     </td>
                     <td>

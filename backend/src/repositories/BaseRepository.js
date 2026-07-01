@@ -15,13 +15,12 @@ class BaseRepository {
     return mongoose.Types.ObjectId.isValid(id);
   }
 
-  async create(data, session = null) {
+  async create(data, options = {}) {
     const document = new this.model(data);
-
-    return document.save({ session });
+    return document.save(options);
   }
 
-  async findById(id, populateOptions = null) {
+  async findById(id, populateOptions = null, options = {}) {
     if (!this.isValidObjectId(id)) return null;
 
     let query = this.model.findById(id);
@@ -30,28 +29,42 @@ class BaseRepository {
       query = query.populate(populateOptions);
     }
 
+    if (options.session) {
+      query = query.session(options.session);
+    }
+
     return query.exec();
   }
 
-  async findOne(filter, populateOptions = null) {
+  async findOne(filter, populateOptions = null, options = {}) {
     let query = this.model.findOne(filter);
 
     if (populateOptions) {
       query = query.populate(populateOptions);
     }
 
+    if (options.session) {
+      query = query.session(options.session);
+    }
+
     return query.exec();
   }
 
-  async findAll() {
-    return this.model.find();
+  async findAll(options = {}) {
+    let query = this.model.find();
+    if (options.session) query = query.session(options.session);
+    return query.exec();
   }
 
-  async find(filter = {}, populateOptions = null) {
+  async find(filter = {}, populateOptions = null, options = {}) {
     let query = this.model.find(filter);
 
     if (populateOptions) {
       query = query.populate(populateOptions);
+    }
+
+    if (options.session) {
+      query = query.session(options.session);
     }
 
     return query.exec();
@@ -63,10 +76,15 @@ class BaseRepository {
     return this.model.findByIdAndUpdate(id, data, options).exec();
   }
 
-  async delete(id) {
+  async delete(id, options = {}) {
     if (!this.isValidObjectId(id)) return null;
 
-    return this.model.findByIdAndDelete(id).exec();
+    let query = this.model.findByIdAndDelete(id);
+    if (options.session) {
+      query = query.session(options.session);
+    }
+
+    return query.exec();
   }
 }
 

@@ -12,7 +12,6 @@ class AccountService {
       accountType,
       parentAccount,
       isGroup,
-      currency,
       amount,
       description,
     } = accountData;
@@ -54,7 +53,6 @@ class AccountService {
       ancestors: resolvedAncestors,
       level: resolvedLevel,
       isGroup: isGroup || false,
-      currency: currency || "INR",
       amount: amount || 0,
       description,
       createdBy: userId,
@@ -112,10 +110,7 @@ class AccountService {
     let level = account.level;
     let ancestors = account.ancestors;
     let accountType = account.accountType;
-    const payload = {
-      ...updateData,
-      currency: updateData.currency || account.currency || "INR",
-    };
+    const payload = { ...updateData };
 
     if (payload.parentAccount) {
       const parent = await accountRepository.findById(

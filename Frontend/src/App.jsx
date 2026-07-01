@@ -58,10 +58,6 @@ import EditFiscalYearPage from "./pages/settings/EditFiscalYearPage";
 import NumberingSeriesListPage from "./pages/settings/NumberingSeriesListPage";
 import CreateNumberingSeriesPage from "./pages/settings/CreateNumberingSeriesPage";
 import EditNumberingSeriesPage from "./pages/settings/EditNumberingSeriesPage";
-import CurrencyExchangeRateListPage from "./pages/settings/CurrencyExchangeRateListPage";
-import CreateCurrencyExchangeRatePage from "./pages/settings/CreateCurrencyExchangeRatePage";
-import EditCurrencyExchangeRatePage from "./pages/settings/EditCurrencyExchangeRatePage";
-
 // ==========================================================================
 // BUDGET & COST CENTER IMPORTS
 // ==========================================================================
@@ -177,9 +173,6 @@ function App() {
         <Route path="/settings/numbering-series" element={<ProtectedRoute><NumberingSeriesListPage /></ProtectedRoute>} />
         <Route path="/settings/numbering-series/new" element={<ProtectedRoute><CreateNumberingSeriesPage /></ProtectedRoute>} />
         <Route path="/settings/numbering-series/:id/edit" element={<ProtectedRoute><EditNumberingSeriesPage /></ProtectedRoute>} />
-        <Route path="/settings/exchange-rates" element={<ProtectedRoute><CurrencyExchangeRateListPage /></ProtectedRoute>} />
-        <Route path="/settings/exchange-rates/new" element={<ProtectedRoute><CreateCurrencyExchangeRatePage /></ProtectedRoute>} />
-        <Route path="/settings/exchange-rates/:id/edit" element={<ProtectedRoute><EditCurrencyExchangeRatePage /></ProtectedRoute>} />
         
         {/* Cost Center Routes */}
         <Route path="/settings/cost-centers" element={<ProtectedRoute><CostCenterListPage /></ProtectedRoute>} />

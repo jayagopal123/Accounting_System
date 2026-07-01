@@ -4,6 +4,7 @@ import MainLayout from "../../layouts/MainLayout";
 import { useAuth } from "../../contexts/AuthContext";
 import { cancelJournalEntry, getJournalEntries, submitJournalEntry } from "../../services/journalEntryApi";
 import { BsFileText, BsCheckLg, BsXLg, BsPencilSquare } from "react-icons/bs";
+import { formatMoney } from "../../utils/formatMoney";
 
 function JournalEntryListPage() {
   const { hasPermission } = useAuth();
@@ -141,8 +142,8 @@ function JournalEntryListPage() {
                   <td className="fw-semibold font-mono">{entry.voucherNumber}</td>
                   <td className="text-muted">{new Date(entry.date).toLocaleDateString()}</td>
                   <td className="text-muted" style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.remarks || "—"}</td>
-                  <td className="font-mono fw-semibold text-end">{Number(entry.totalDebit).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                  <td className="font-mono fw-semibold text-end">{Number(entry.totalCredit).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  <td className="font-mono fw-semibold text-end">{formatMoney(entry.totalDebit, { noSymbol: true })}</td>
+                  <td className="font-mono fw-semibold text-end">{formatMoney(entry.totalCredit, { noSymbol: true })}</td>
                   <td><span className={`badge-premium ${entry.status === "Draft" ? "badge-premium-draft" : entry.status === "Submitted" ? "badge-premium-submitted" : "badge-premium-cancelled"}`}>{entry.status}</span></td>
                   {hasActions ? (
                     <td className="text-end">

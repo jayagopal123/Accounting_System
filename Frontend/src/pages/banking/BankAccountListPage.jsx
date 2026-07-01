@@ -123,8 +123,7 @@ function BankAccountListPage() {
                       </span>
                     </td>
                     <td className="text-end font-mono fw-semibold">
-                      {acc.currency}{" "}
-                      {acc.currentBalance?.toLocaleString(undefined, {
+                      {acc.currentBalance?.toLocaleString("en-IN", {
                         minimumFractionDigits: 2,
                       })}
                     </td>

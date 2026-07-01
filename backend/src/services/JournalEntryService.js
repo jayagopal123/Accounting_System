@@ -44,7 +44,7 @@ class JournalEntryService {
       entity: "JournalEntry",
       entityId: journal._id,
       entityName: journal.voucherNumber,
-      description: `Journal Entry ${journal.voucherNumber} was created for $${totalDebit.toFixed(2)}`,
+      description: `Journal Entry ${journal.voucherNumber} was created for ₹${totalDebit.toFixed(2)}`,
       category: "business",
       performedBy: journal.createdBy,
       performedByName: "",

@@ -4,6 +4,7 @@ import {
   getCashFlow,
   downloadReport,
 } from "../../services/financialReportApi";
+import { formatMoney } from "../../utils/formatMoney";
 
 function CashFlowPage() {
   const [data, setData] = useState(null);
@@ -74,9 +75,7 @@ function CashFlowPage() {
                 </td>
                 <td className="text-end font-mono fw-semibold">
                   {item.amount >= 0 ? "" : "("}
-                  {Math.abs(item.amount).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
+                  {formatMoney(Math.abs(item.amount), { noSymbol: true })}
                   {item.amount < 0 ? ")" : ""}
                 </td>
               </tr>
@@ -88,9 +87,7 @@ function CashFlowPage() {
             </td>
             <td className="text-end fw-bold font-mono" style={{ color }}>
               {section.total >= 0 ? "" : "("}
-              {Math.abs(section.total).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-              })}
+              {formatMoney(Math.abs(section.total), { noSymbol: true })}
               {section.total < 0 ? ")" : ""}
             </td>
           </tr>
@@ -211,9 +208,7 @@ function CashFlowPage() {
                 }}
               >
                 {data.netCashFlow >= 0 ? "+" : ""}
-                {data.netCashFlow.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                })}
+                {formatMoney(Math.abs(data.netCashFlow), { noSymbol: true })}
               </span>
             </div>
           </>

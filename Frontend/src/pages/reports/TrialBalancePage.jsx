@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import MainLayout from "../../layouts/MainLayout";
-import {
+import MainLayout from "../../layouts/MainLayout";import {
   getTrialBalance,
   downloadReport,
 } from "../../services/financialReportApi";
+import { formatMoney } from "../../utils/formatMoney";
 
 
 function TrialBalancePage() {
@@ -152,9 +152,7 @@ function TrialBalancePage() {
                 >
                   <small className="text-muted d-block">Total Debits</small>
                   <strong className="font-mono">
-                    {data.totals.totalDebit.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
+                    {formatMoney(data.totals.totalDebit)}
                   </strong>
                 </div>
               </div>
@@ -165,9 +163,7 @@ function TrialBalancePage() {
                 >
                   <small className="text-muted d-block">Total Credits</small>
                   <strong className="font-mono">
-                    {data.totals.totalCredit.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
+                    {formatMoney(data.totals.totalCredit)}
                   </strong>
                 </div>
               </div>
@@ -268,16 +264,12 @@ function TrialBalancePage() {
                       </td>
                       <td className="text-end font-mono">
                         {row.totalDebit
-                          ? row.totalDebit.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                            })
+                          ? formatMoney(row.totalDebit, { noSymbol: true })
                           : "—"}
                       </td>
                       <td className="text-end font-mono">
                         {row.totalCredit
-                          ? row.totalCredit.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                            })
+                          ? formatMoney(row.totalCredit, { noSymbol: true })
                           : "—"}
                       </td>
                       <td
@@ -286,9 +278,7 @@ function TrialBalancePage() {
                         }`}
                       >
                         {row.balance
-                          ? Math.abs(row.balance).toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                            })
+                          ? formatMoney(Math.abs(row.balance), { noSymbol: true })
                           : "0.00"}
                       </td>
                     </tr>

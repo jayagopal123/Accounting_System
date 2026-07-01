@@ -13,7 +13,6 @@ function EditAccountPage() {
     accountType: "ASSET",
     parentAccount: "",
     isGroup: false,
-    currency: "INR",
     amount: 0,
     description: "",
   });
@@ -35,7 +34,6 @@ function EditAccountPage() {
       accountType: account.accountType || "ASSET",
       parentAccount: account.parentAccount || "",
       isGroup: Boolean(account.isGroup),
-      currency: account.currency || "INR",
       amount: account.amount || 0,
       description: account.description || "",
     });
@@ -137,20 +135,8 @@ function EditAccountPage() {
                   ))}
                 </select>
               </div>
-            </div>
-
-            <div className="form-section-title">Financial Settings</div>
-            <div className="row g-3 mb-4">
-              <div className="col-md-3">
-                <label className="form-label">Currency</label>
-                <select className="form-select" name="currency" value={formData.currency} onChange={handleChange}>
-                  <option value="INR">INR (₹)</option>
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="AED">AED (د.إ)</option>
-                  <option value="GBP">GBP (£)</option>
-                </select>
-              </div>
+            </div>          <div className="form-section-title">Financial Settings</div>
+          <div className="row g-3 mb-4">
               <div className="col-md-3">
                 <label className="form-label">Amount</label>
                 <input

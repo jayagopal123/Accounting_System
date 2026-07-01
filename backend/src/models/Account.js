@@ -49,11 +49,6 @@ const accountSchema = new mongoose.Schema(
       default: 1
     },
 
-    currency: {
-      type: String,
-      default: "USD"
-    },
-
     amount: {
       type: Number,
       default: 0

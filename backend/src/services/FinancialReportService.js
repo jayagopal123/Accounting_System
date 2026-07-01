@@ -299,25 +299,19 @@ class FinancialReportService {
     };
     flatten(tree);
 
-    // Verify balance
-    const totalDebits = flatRows.reduce(
-      (s, r) => s + (r.accountType === "ASSET" || r.accountType === "EXPENSE" ? Math.abs(r.balance) : 0),
-      0,
-    );
-    const totalCredits = flatRows.reduce(
-      (s, r) => s + (r.accountType === "LIABILITY" || r.accountType === "EQUITY" || r.accountType === "INCOME" ? Math.abs(r.balance) : 0),
-      0,
-    );
+    // Compute raw debit/credit totals from journal entries (these should always be equal)
+    const rawTotalDebit = balances.reduce((s, r) => s + r.totalDebit, 0);
+    const rawTotalCredit = balances.reduce((s, r) => s + r.totalCredit, 0);
 
     return {
       rows: flatRows,
       tree,
       totals: {
-        totalDebit: balances.reduce((s, r) => s + r.totalDebit, 0),
-        totalCredit: balances.reduce((s, r) => s + r.totalCredit, 0),
-        totalDebitBalance: totalDebits,
-        totalCreditBalance: totalCredits,
-        isBalanced: Math.abs(totalDebits - totalCredits) < 0.01,
+        totalDebit: rawTotalDebit,
+        totalCredit: rawTotalCredit,
+        // isBalanced is computed from the same values displayed to the user,
+        // using a tolerance to handle floating-point precision
+        isBalanced: Math.abs(rawTotalDebit - rawTotalCredit) < 0.01,
       },
     };
   }

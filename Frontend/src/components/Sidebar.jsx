@@ -52,7 +52,6 @@ function Sidebar() {
     { to: "/settings/cost-centers", label: "Cost Centers", icon: FaCog, section: "Settings" },
     { to: "/settings/fiscal-years", label: "Fiscal Years", icon: FaCog, section: "Settings" },
     { to: "/settings/numbering-series", label: "Numbering Series", icon: FaCog, section: "Settings" },
-    { to: "/settings/exchange-rates", label: "Exchange Rates", icon: FaCog, section: "Settings" },
     { to: "/tax-rates", label: "Tax Rates", icon: FaPercent, section: "Tax" },
     { to: "/tax-groups", label: "Tax Groups", icon: FaPercent, section: "Tax" },
     { to: "/reports/gstr-1", label: "GSTR-1", icon: FaChartLine, section: "Tax" },

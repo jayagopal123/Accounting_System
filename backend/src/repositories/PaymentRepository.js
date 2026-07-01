@@ -6,8 +6,12 @@ class PaymentRepository extends BaseRepository {
     super(Payment);
   }
 
-  async getLatestPayment() {
-    return this.model.findOne().sort({ createdAt: -1 });
+  async getLatestByPrefix(prefix) {
+    // Find latest payment/receipt by prefix (PMT- or RCT-), sort numerically
+    return this.model.findOne({
+      paymentNumber: { $regex: `^${prefix}-` }
+    })
+      .sort({ paymentNumber: -1 }); // Sorting lexicographically works because of fixed-length padding
   }
 
   async findByStatus(status) {

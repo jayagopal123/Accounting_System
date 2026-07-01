@@ -29,7 +29,6 @@ function EditBankAccountPage() {
           branchName: account.branchName || "",
           ifscCode: account.ifscCode || "",
           accountType: account.accountType || "Current",
-          currency: account.currency || "INR",
           description: account.description || "",
         });
         setError("");
@@ -191,19 +190,6 @@ function EditBankAccountPage() {
                 onChange={(e) => handleChange("ifscCode", e.target.value)}
                 placeholder="e.g. HDFC0001234"
               />
-            </div>
-            <div className="col-md-4">
-              <label className="form-label">Currency</label>
-              <select
-                className="form-select"
-                value={formData.currency}
-                onChange={(e) => handleChange("currency", e.target.value)}
-              >
-                <option value="INR">INR (₹)</option>
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="GBP">GBP (£)</option>
-              </select>
             </div>
             <div className="col-12">
               <label className="form-label">Description</label>

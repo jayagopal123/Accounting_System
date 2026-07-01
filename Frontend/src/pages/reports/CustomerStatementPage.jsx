@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import MainLayout from "../../layouts/MainLayout";
 import { getCustomerStatement } from "../../services/financialReportApi";
 import { getCustomers } from "../../services/customerApi";
+import { formatMoney } from "../../utils/formatMoney";
 
 function CustomerStatementPage() {
   const [data, setData] = useState(null);
@@ -100,9 +101,9 @@ function CustomerStatementPage() {
                       <td className="text-muted">{new Date(txn.date).toLocaleDateString()}</td>
                       <td><span className={`badge ${txn.type === "Invoice" ? "bg-primary bg-opacity-10 text-primary" : "bg-success bg-opacity-10 text-success"}`}>{txn.type}</span></td>
                       <td className="font-mono">{txn.reference}</td>
-                      <td className="text-end font-mono">{txn.debit > 0 ? txn.debit.toFixed(2) : "-"}</td>
-                      <td className="text-end font-mono">{txn.credit > 0 ? txn.credit.toFixed(2) : "-"}</td>
-                      <td className={`text-end font-mono fw-bold ${txn.balance > 0 ? "text-danger" : "text-success"}`}>{txn.balance.toFixed(2)}</td>
+                      <td className="text-end font-mono">{txn.debit > 0 ? formatMoney(txn.debit, { noSymbol: true }) : "-"}</td>
+                      <td className="text-end font-mono">{txn.credit > 0 ? formatMoney(txn.credit, { noSymbol: true }) : "-"}</td>
+                      <td className={`text-end font-mono fw-bold ${txn.balance > 0 ? "text-danger" : "text-success"}`}>{formatMoney(Math.abs(txn.balance), { noSymbol: true })}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -111,10 +112,10 @@ function CustomerStatementPage() {
 
             <div className="d-flex justify-content-end mt-3 pt-3 border-top">
               <div style={{ minWidth: "280px" }}>
-                <div className="summary-row"><span className="summary-label">Total Invoiced</span><span className="summary-value">{data.summary.totalInvoiced.toFixed(2)}</span></div>
-                <div className="summary-row"><span className="summary-label">Total Paid</span><span className="summary-value">{data.summary.totalPaid.toFixed(2)}</span></div>
-                <div className="summary-row"><span className="summary-label">Total Credited</span><span className="summary-value">{data.summary.totalCredited.toFixed(2)}</span></div>
-                <div className="summary-row total"><span className="summary-label">Outstanding</span><span className="summary-value">{data.summary.outstandingBalance.toFixed(2)}</span></div>
+                <div className="summary-row"><span className="summary-label">Total Invoiced</span><span className="summary-value">{formatMoney(data.summary.totalInvoiced, { noSymbol: true })}</span></div>
+                <div className="summary-row"><span className="summary-label">Total Paid</span><span className="summary-value">{formatMoney(data.summary.totalPaid, { noSymbol: true })}</span></div>
+                <div className="summary-row"><span className="summary-label">Total Credited</span><span className="summary-value">{formatMoney(data.summary.totalCredited, { noSymbol: true })}</span></div>
+                <div className="summary-row total"><span className="summary-label">Outstanding</span><span className="summary-value">{formatMoney(data.summary.outstandingBalance, { noSymbol: true })}</span></div>
               </div>
             </div>
           </>

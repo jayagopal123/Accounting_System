@@ -88,6 +88,31 @@ const salesInvoiceSchema = new mongoose.Schema(
       min: 0,
     },
 
+    totalPaid: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    remainingBalance: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["Unpaid", "Partially Paid", "Paid"],
+      default: "Unpaid",
+    },
+
+    payments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Payment",
+      },
+    ],
+
     remarks: {
       type: String,
       trim: true,

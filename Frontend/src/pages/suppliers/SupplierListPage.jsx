@@ -47,7 +47,7 @@ function SupplierListPage() {
     }
   };
 
-  const colSpan = 5 + (canUpdate || canDelete ? 1 : 0);
+  const colSpan = 4 + (canUpdate || canDelete ? 1 : 0);
 
   return (
     <MainLayout>
@@ -76,7 +76,6 @@ function SupplierListPage() {
                 <th>Code</th>
                 <th>Name</th>
                 <th>Company</th>
-                <th>Currency</th>
                 <th>Status</th>
                 {canUpdate || canDelete ? <th className="text-end">Actions</th> : null}
               </tr>
@@ -102,7 +101,6 @@ function SupplierListPage() {
                   <td className="fw-semibold font-mono">{supplier.supplierCode}</td>
                   <td className="fw-medium">{supplier.supplierName}</td>
                   <td className="text-muted">{supplier.company || "—"}</td>
-                  <td className="font-mono">{supplier.defaultCurrency}</td>
                   <td><span className={`badge-premium ${supplier.status === "Active" ? "badge-premium-active" : "badge-premium-blocked"}`}>{supplier.status}</span></td>
                   {canUpdate || canDelete ? (
                     <td className="text-end">

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import MainLayout from "../../layouts/MainLayout";
 import { getSalesRegister } from "../../services/financialReportApi";
 import { getCustomers } from "../../services/customerApi";
+import { formatMoney } from "../../utils/formatMoney";
 
 function SalesRegisterPage() {
   const [data, setData] = useState(null);
@@ -99,9 +100,9 @@ function SalesRegisterPage() {
                       <td className="font-mono fw-semibold">{inv.invoiceNumber}</td>
                       <td className="text-muted">{new Date(inv.invoiceDate).toLocaleDateString()}</td>
                       <td>{inv.customer?.customerName || "N/A"}</td>
-                      <td className="text-end font-mono">{inv.subtotal.toFixed(2)}</td>
-                      <td className="text-end font-mono">{inv.taxAmount.toFixed(2)}</td>
-                      <td className="text-end font-mono fw-bold">{inv.grandTotal.toFixed(2)}</td>
+                      <td className="text-end font-mono">{formatMoney(inv.subtotal, { noSymbol: true })}</td>
+                      <td className="text-end font-mono">{formatMoney(inv.taxAmount, { noSymbol: true })}</td>
+                      <td className="text-end font-mono fw-bold">{formatMoney(inv.grandTotal, { noSymbol: true })}</td>
                       <td><span className="badge bg-success bg-opacity-10 text-success">{inv.status}</span></td>
                     </tr>
                   ))}
@@ -113,9 +114,9 @@ function SalesRegisterPage() {
               <div className="d-flex justify-content-end mt-3 pt-3 border-top">
                 <div style={{ minWidth: "280px" }}>
                   <div className="summary-row"><span className="summary-label">Total Invoices</span><span className="summary-value">{data.summary.totalInvoices}</span></div>
-                  <div className="summary-row"><span className="summary-label">Total Subtotal</span><span className="summary-value">{data.summary.totalSubtotal.toFixed(2)}</span></div>
-                  <div className="summary-row"><span className="summary-label">Total Tax</span><span className="summary-value">{data.summary.totalTax.toFixed(2)}</span></div>
-                  <div className="summary-row total"><span className="summary-label">Grand Total</span><span className="summary-value">{data.summary.totalGrandTotal.toFixed(2)}</span></div>
+                  <div className="summary-row"><span className="summary-label">Total Subtotal</span><span className="summary-value">{formatMoney(data.summary.totalSubtotal, { noSymbol: true })}</span></div>
+                  <div className="summary-row"><span className="summary-label">Total Tax</span><span className="summary-value">{formatMoney(data.summary.totalTax, { noSymbol: true })}</span></div>
+                  <div className="summary-row total"><span className="summary-label">Grand Total</span><span className="summary-value">{formatMoney(data.summary.totalGrandTotal, { noSymbol: true })}</span></div>
                 </div>
               </div>
             )}

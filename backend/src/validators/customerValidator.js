@@ -11,8 +11,6 @@ export const createCustomerSchema = Joi.object({
 
   territory: Joi.string(),
 
-  defaultCurrency: Joi.string(),
-
   company: Joi.string(),
 
   gstNumber: Joi.string(),

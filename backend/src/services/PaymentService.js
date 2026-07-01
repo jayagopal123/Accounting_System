@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import paymentRepository from "../repositories/PaymentRepository.js";
 import journalEntryRepository from "../repositories/JournalEntryRepository.js";
 import accountRepository from "../repositories/AccountRepository.js";
@@ -8,73 +9,112 @@ import bankAccountRepository from "../repositories/BankAccountRepository.js";
 import bankAccountService from "./BankAccountService.js";
 import ApiError from "../utils/ApiError.js";
 import activityLogService from "./ActivityLogService.js";
+import PaymentSyncService from "./PaymentSyncService.js";
 
 class PaymentService {
   async createPayment(paymentData) {
-    const latestPayment = await paymentRepository.getLatestPayment();
+    // Determine prefix based on payment type
+    const prefix = paymentData.paymentType === "Receipt" ? "RCT" : "PMT";
+    let attempts = 0;
+    const maxAttempts = 5;
+    
+    while (attempts < maxAttempts) {
+      const session = await mongoose.startSession();
+      session.startTransaction();
+      
+      try {
+        // Get latest entry for the specific prefix
+        const latestEntry = await paymentRepository.getLatestByPrefix(prefix);
+        
+        // Generate next number
+        let paymentNumber = `${prefix}-00001`;
+        if (latestEntry) {
+          const lastNumber = parseInt(
+            latestEntry.paymentNumber.replace(`${prefix}-`, ""),
+            10,
+          );
+          paymentNumber = `${prefix}-${String(lastNumber + 1).padStart(5, "0")}`;
+        }
 
-    let paymentNumber = "PMT-00001";
-    if (latestPayment) {
-      const lastNumber = parseInt(
-        latestPayment.paymentNumber.replace(/^(PMT|RCT)-/, ""),
-        10,
-      );
-      paymentNumber = `PMT-${String(lastNumber + 1).padStart(5, "0")}`;
+        // Create a copy of payment data to avoid mutating the original
+        const paymentDataCopy = { ...paymentData };
+        paymentDataCopy.paymentNumber = paymentNumber;
+
+        console.log(`[Attempt ${attempts + 1}] Generated Payment/Receipt Number:`, paymentDataCopy.paymentNumber);
+
+        // Resolve customer/supplier from invoice and validate it is Submitted
+        if (paymentDataCopy.invoiceType === "SalesInvoice") {
+          const invoice = await salesInvoiceRepository.findById(
+            paymentDataCopy.invoice,
+          ).session(session);
+          if (!invoice) {
+            throw new ApiError(404, "Sales invoice not found", "INVOICE_NOT_FOUND");
+          }
+          if (invoice.status !== "Submitted") {
+            throw new ApiError(
+              400,
+              "Cannot create payment against a non-submitted sales invoice",
+              "INVOICE_NOT_SUBMITTED",
+            );
+          }
+          paymentDataCopy.customer = invoice.customer;
+        } else {
+          const invoice = await purchaseInvoiceRepository.findById(
+            paymentDataCopy.invoice,
+          ).session(session);
+          if (!invoice) {
+            throw new ApiError(
+              404,
+              "Purchase invoice not found",
+              "INVOICE_NOT_FOUND",
+            );
+          }
+          if (invoice.status !== "Submitted") {
+            throw new ApiError(
+              400,
+              "Cannot create payment against a non-submitted purchase invoice",
+              "INVOICE_NOT_SUBMITTED",
+            );
+          }
+          paymentDataCopy.supplier = invoice.supplier;
+        }
+
+        const payment = await paymentRepository.create(paymentDataCopy, { session });
+
+        // Handle payment sync
+        await PaymentSyncService.handlePaymentCreated(payment, session);
+
+        await activityLogService.logActivity({
+          action: "Created",
+          entity: "Payment",
+          entityId: payment._id,
+          entityName: payment.paymentNumber,
+          description: `${payment.paymentType} ${payment.paymentNumber} was created for ${payment.invoiceType}`,
+          category: "business",
+          performedBy: payment.createdBy,
+          performedByName: "",
+        });
+
+        await session.commitTransaction();
+        session.endSession();
+        return payment;
+      } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        
+        // Check if the error is a duplicate key error (code 11000)
+        if (error.code === 11000) {
+          attempts++;
+          console.warn(`[Attempt ${attempts}] Duplicate payment number detected, retrying...`);
+          if (attempts >= maxAttempts) {
+            throw new ApiError(500, "Failed to generate unique payment number after multiple attempts", "NUMBER_GENERATION_FAILED");
+          }
+        } else {
+          // Re-throw other errors
+          throw error;
+        }
+      }
     }
-
-    paymentData.paymentNumber = paymentNumber;
-
-    // Resolve customer/supplier from invoice and validate it is Submitted
-    if (paymentData.invoiceType === "SalesInvoice") {
-      const invoice = await salesInvoiceRepository.findById(
-        paymentData.invoice,
-      );
-      if (!invoice) {
-        throw new ApiError(404, "Sales invoice not found", "INVOICE_NOT_FOUND");
-      }
-      if (invoice.status !== "Submitted") {
-        throw new ApiError(
-          400,
-          "Cannot create payment against a non-submitted sales invoice",
-          "INVOICE_NOT_SUBMITTED",
-        );
-      }
-      paymentData.customer = invoice.customer;
-    } else {
-      const invoice = await purchaseInvoiceRepository.findById(
-        paymentData.invoice,
-      );
-      if (!invoice) {
-        throw new ApiError(
-          404,
-          "Purchase invoice not found",
-          "INVOICE_NOT_FOUND",
-        );
-      }
-      if (invoice.status !== "Submitted") {
-        throw new ApiError(
-          400,
-          "Cannot create payment against a non-submitted purchase invoice",
-          "INVOICE_NOT_SUBMITTED",
-        );
-      }
-      paymentData.supplier = invoice.supplier;
-    }
-
-    const payment = await paymentRepository.create(paymentData);
-
-    await activityLogService.logActivity({
-      action: "Created",
-      entity: "Payment",
-      entityId: payment._id,
-      entityName: payment.paymentNumber,
-      description: `${payment.paymentType} ${payment.paymentNumber} was created for ${payment.invoiceType}`,
-      category: "business",
-      performedBy: payment.createdBy,
-      performedByName: "",
-    });
-
-    return payment;
   }
 
   async getPayments() {
@@ -118,7 +158,11 @@ class PaymentService {
     // Find the Cash/Bank account
     const cashAccount = await accountRepository.findById(payment.account);
     if (!cashAccount) {
-      throw new ApiError(404, "Cash/Bank account not found", "ACCOUNT_NOT_FOUND");
+      throw new ApiError(
+        404,
+        "Cash/Bank account not found",
+        "ACCOUNT_NOT_FOUND",
+      );
     }
 
     let debitAccount, creditAccount;
@@ -168,10 +212,8 @@ class PaymentService {
       lineItems: [
         {
           account: debitAccount._id,
-          debitAmount:
-            payment.paymentType === "Receipt" ? payment.amount : 0,
-          creditAmount:
-            payment.paymentType === "Payment" ? payment.amount : 0,
+          debitAmount: payment.paymentType === "Receipt" ? payment.amount : 0,
+          creditAmount: payment.paymentType === "Payment" ? payment.amount : 0,
           description:
             payment.paymentType === "Receipt"
               ? `Cash/Bank received from customer`
@@ -179,10 +221,8 @@ class PaymentService {
         },
         {
           account: creditAccount._id,
-          debitAmount:
-            payment.paymentType === "Payment" ? payment.amount : 0,
-          creditAmount:
-            payment.paymentType === "Receipt" ? payment.amount : 0,
+          debitAmount: payment.paymentType === "Payment" ? payment.amount : 0,
+          creditAmount: payment.paymentType === "Receipt" ? payment.amount : 0,
           description:
             payment.paymentType === "Receipt"
               ? `Accounts Receivable reduced`
@@ -260,11 +300,7 @@ class PaymentService {
     }
 
     if (payment.status === "Cancelled") {
-      throw new ApiError(
-        400,
-        "Payment already cancelled",
-        "INVALID_STATUS",
-      );
+      throw new ApiError(400, "Payment already cancelled", "INVALID_STATUS");
     }
 
     // If the payment was submitted, also cancel the related Journal Entry

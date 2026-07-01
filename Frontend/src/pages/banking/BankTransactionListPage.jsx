@@ -8,6 +8,7 @@ import {
   cancelBankTransaction,
 } from "../../services/bankTransactionApi";
 import { BsBank, BsCheckLg, BsXLg } from "react-icons/bs";
+import { formatMoney } from "../../utils/formatMoney";
 
 function BankTransactionListPage() {
   const [transactions, setTransactions] = useState([]);
@@ -71,9 +72,6 @@ function BankTransactionListPage() {
       setError(String(err));
     }
   };
-
-  const formatCurrency = (amount) =>
-    amount?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00";
 
   return (
     <MainLayout>
@@ -213,7 +211,7 @@ function BankTransactionListPage() {
                     </td>
                     <td className="text-end font-mono fw-semibold">
                       {txn.transactionType === "Deposit" ? "+" : "-"}
-                      {formatCurrency(txn.amount)}
+                      {formatMoney(txn.amount, { noSymbol: true })}
                     </td>
                     <td className="text-muted" style={{ fontSize: "0.8rem" }}>
                       {txn.referenceNumber || txn.referenceType || "—"}

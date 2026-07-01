@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import MainLayout from "../../layouts/MainLayout";
 import { getARAging } from "../../services/financialReportApi";
+import { formatMoney } from "../../utils/formatMoney";
 
 const BUCKET_ORDER = ["0-30", "31-60", "61-90", "91-plus"];
 
@@ -51,7 +52,7 @@ function ARAgingPage() {
                     <div className="card border-0 shadow-sm h-100">
                       <div className="card-body text-center">
                         <div className="text-muted small mb-1">{bucket.label}</div>
-                        <div className="fw-bold fs-5">{bucket.amount.toFixed(2)}</div>
+                        <div className="fw-bold fs-5">{formatMoney(bucket.amount, { noSymbol: true })}</div>
                         <div className="text-muted small">{pct}% of total</div>
                         <div className="mt-2"><span className="badge bg-secondary">{bucket.invoices.length} invoices</span></div>
                       </div>
@@ -65,7 +66,7 @@ function ARAgingPage() {
               <div className="p-3 bg-light rounded" style={{ minWidth: "220px" }}>
                 <div className="d-flex justify-content-between">
                   <strong>Total Outstanding:</strong>
-                  <strong className="text-danger">{data.totalOutstanding.toFixed(2)}</strong>
+                  <strong className="text-danger">{formatMoney(data.totalOutstanding, { noSymbol: true })}</strong>
                 </div>
               </div>
             </div>
@@ -75,7 +76,7 @@ function ARAgingPage() {
               if (bucket.invoices.length === 0) return null;
               return (
                 <div key={key} className="mb-4">
-                  <h6 className="fw-bold mb-2">{bucket.label} <span className="text-muted fw-normal">({bucket.invoices.length} invoices, {bucket.amount.toFixed(2)})</span></h6>
+                  <h6 className="fw-bold mb-2">{bucket.label} <span className="text-muted fw-normal">({bucket.invoices.length} invoices, {formatMoney(bucket.amount, { noSymbol: true })})</span></h6>
                   <div className="table-responsive">
                     <table className="table table-premium align-middle small">
                       <thead>
@@ -94,8 +95,8 @@ function ARAgingPage() {
                             <td className="font-mono">{inv.invoiceNumber}</td>
                             <td>{inv.customerName}</td>
                             <td className="text-muted">{new Date(inv.invoiceDate).toLocaleDateString()}</td>
-                            <td className="text-end font-mono">{inv.grandTotal.toFixed(2)}</td>
-                            <td className="text-end font-mono text-danger fw-semibold">{inv.outstanding.toFixed(2)}</td>
+                            <td className="text-end font-mono">{formatMoney(inv.grandTotal, { noSymbol: true })}</td>
+                            <td className="text-end font-mono text-danger fw-semibold">{formatMoney(inv.outstanding, { noSymbol: true })}</td>
                             <td className="text-end font-mono">{inv.ageDays}</td>
                           </tr>
                         ))}

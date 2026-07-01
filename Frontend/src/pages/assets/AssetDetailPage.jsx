@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import { getAssetById, activateAsset, disposeAsset, runDepreciation } from "../../services/assetApi";
 import { BsArrowLeft, BsCheckLg, BsLightning, BsXLg } from "react-icons/bs";
+import { formatMoney } from "../../utils/formatMoney";
 
 function AssetDetailPage() {
   const { id } = useParams();
@@ -71,9 +72,6 @@ function AssetDetailPage() {
       setActionLoading(false);
     }
   };
-
-  const formatCurrency = (amount) =>
-    amount?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00";
 
   const getStatusBadge = (status) => {
     const map = {
@@ -148,7 +146,7 @@ function AssetDetailPage() {
             <div className="card border">
               <div className="card-body text-center py-3">
                 <div className="text-muted small mb-1">Purchase Cost</div>
-                <div className="fw-bold fs-5">{formatCurrency(asset.purchaseCost)}</div>
+                <div className="fw-bold fs-5">{formatMoney(asset.purchaseCost, { noSymbol: true })}</div>
               </div>
             </div>
           </div>
@@ -156,7 +154,7 @@ function AssetDetailPage() {
             <div className="card border">
               <div className="card-body text-center py-3">
                 <div className="text-muted small mb-1">Current Value</div>
-                <div className="fw-bold fs-5 text-success">{formatCurrency(asset.currentValue)}</div>
+                <div className="fw-bold fs-5 text-success">{formatMoney(asset.currentValue, { noSymbol: true })}</div>
               </div>
             </div>
           </div>
@@ -164,7 +162,7 @@ function AssetDetailPage() {
             <div className="card border">
               <div className="card-body text-center py-3">
                 <div className="text-muted small mb-1">Accumulated Depreciation</div>
-                <div className="fw-bold fs-5 text-warning">{formatCurrency(asset.accumulatedDepreciation)}</div>
+                <div className="fw-bold fs-5 text-warning">{formatMoney(asset.accumulatedDepreciation, { noSymbol: true })}</div>
               </div>
             </div>
           </div>
@@ -211,7 +209,7 @@ function AssetDetailPage() {
                   </div>
                   <div className="row mb-2">
                     <div className="col-5 text-muted small">Salvage Value</div>
-                    <div className="col-7">{formatCurrency(asset.salvageValue)}</div>
+                    <div className="col-7">{formatMoney(asset.salvageValue, { noSymbol: true })}</div>
                   </div>
                   <div className="row mb-2">
                     <div className="col-5 text-muted small">Last Depreciation</div>
@@ -272,7 +270,7 @@ function AssetDetailPage() {
                     <div className="col-2 text-muted small">Disposal Date</div>
                     <div className="col-4">{asset.disposalDate ? new Date(asset.disposalDate).toLocaleDateString() : "—"}</div>
                     <div className="col-2 text-muted small">Disposal Amount</div>
-                    <div className="col-4 font-mono">{formatCurrency(asset.disposalAmount)}</div>
+                    <div className="col-4 font-mono">{formatMoney(asset.disposalAmount, { noSymbol: true })}</div>
                   </div>
                   {asset.disposalRemarks && (
                     <div className="row">
@@ -299,8 +297,8 @@ function AssetDetailPage() {
                 </div>
                 <div className="modal-body">
                   <p className="text-muted small mb-3">
-                    Current Value: <strong>{formatCurrency(asset.currentValue)}</strong> |
-                    Accumulated Depreciation: <strong>{formatCurrency(asset.accumulatedDepreciation)}</strong>
+                    Current Value: <strong>{formatMoney(asset.currentValue, { noSymbol: true })}</strong> |
+                    Accumulated Depreciation: <strong>{formatMoney(asset.accumulatedDepreciation, { noSymbol: true })}</strong>
                   </p>
                   <div className="row g-3">
                     <div className="col-md-6">

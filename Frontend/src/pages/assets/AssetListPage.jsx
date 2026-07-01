@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import { getAssets, activateAsset, disposeAsset, runDepreciation, runBulkDepreciation } from "../../services/assetApi";
 import { BsBox, BsCheckLg, BsPlusLg, BsXLg, BsLightning } from "react-icons/bs";
+import { formatMoney } from "../../utils/formatMoney";
 
 function AssetListPage() {
   const navigate = useNavigate();
@@ -83,9 +84,6 @@ function AssetListPage() {
       setBulkProcessing(false);
     }
   };
-
-  const formatCurrency = (amount) =>
-    amount?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00";
 
   const getStatusBadge = (status) => {
     const map = {
@@ -178,8 +176,8 @@ function AssetListPage() {
                     <td className="text-muted font-mono" style={{ fontSize: "0.8rem" }}>
                       {new Date(asset.purchaseDate).toLocaleDateString()}
                     </td>
-                    <td className="text-end font-mono">{formatCurrency(asset.purchaseCost)}</td>
-                    <td className="text-end font-mono fw-semibold">{formatCurrency(asset.currentValue)}</td>
+                    <td className="text-end font-mono">{formatMoney(asset.purchaseCost, { noSymbol: true })}</td>
+                    <td className="text-end font-mono fw-semibold">{formatMoney(asset.currentValue, { noSymbol: true })}</td>
                     <td>
                       <span className={getStatusBadge(asset.status)}>{asset.status}</span>
                     </td>
