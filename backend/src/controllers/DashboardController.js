@@ -22,6 +22,17 @@ class DashboardController {
       data: activities,
     });
   });
+
+  getCashFlowSeries = catchAsync(async (req, res) => {
+    const days = Math.min(parseInt(req.query.days, 10) || 30, 365);
+    const series = await dashboardService.getCashFlowSeries(days);
+
+    res.status(200).json({
+      success: true,
+      message: "Cash flow series retrieved successfully.",
+      data: series,
+    });
+  });
 }
 
 export default new DashboardController();

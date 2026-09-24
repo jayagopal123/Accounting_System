@@ -46,7 +46,21 @@ import TaxGroup from "../src/models/TaxGroup.js";
 import FiscalYear from "../src/models/FiscalYear.js";
 import NumberingSeries from "../src/models/NumberingSeries.js";
 import CostCenter from "../src/models/CostCenter.js";
-import CurrencyExchangeRate from "../src/models/CurrencyExchangeRate.js";
+// NOTE: CurrencyExchangeRate model was never implemented; define a stub schema so
+// the seed script can still record exchange-rate reference data.
+const currencyExchangeRateSchema = new mongoose.Schema(
+  {
+    fromCurrency: { type: String, required: true },
+    toCurrency: { type: String, required: true },
+    rate: { type: Number, required: true },
+    effectiveDate: { type: Date, default: Date.now },
+    isActive: { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+const CurrencyExchangeRate =
+  mongoose.models.CurrencyExchangeRate ||
+  mongoose.model("CurrencyExchangeRate", currencyExchangeRateSchema);
 import Budget from "../src/models/Budget.js";
 import BankAccount from "../src/models/BankAccount.js";
 import BankTransaction from "../src/models/BankTransaction.js";
@@ -1053,12 +1067,15 @@ const seed = async () => {
 
     const fiscalYearsData = [
       {
-        yearName: "FY 2024-2025",
-        startDate: new Date("2024-04-01"),
-        endDate: new Date("2025-03-31"),
+        // NOTE: the seeded transactions (invoices, JEs, payments, bank txns, assets)
+        // are dated Jan-Mar 2024, so the FY must cover that window for the
+        // reports' default date range to include data.
+        yearName: "FY 2023-2024",
+        startDate: new Date("2023-04-01"),
+        endDate: new Date("2024-03-31"),
         status: "Active",
         isDefault: true,
-        description: "Financial Year 2024-2025",
+        description: "Financial Year 2023-2024 (covers seeded transaction dates)",
         createdBy: adminId,
       },
     ];
@@ -1121,7 +1138,7 @@ const seed = async () => {
     console.log("--- STEP 16: Seeding Budget ---");
 
     const budgetData = {
-      name: "Annual Operating Budget FY 2024-2025",
+      name: "Annual Operating Budget FY 2023-2024",
       fiscalYear: fiscalYear._id,
       costCenter: costCenters[2]._id, // Admin
       status: "Approved",
@@ -1131,7 +1148,7 @@ const seed = async () => {
         { account: ac5103, amount: 180000, notes: "Annual utilities (₹15,000 × 12 months)" },
         { account: accountMap["5104"]._id, amount: 120000, notes: "Annual office supplies" },
       ],
-      description: "Comprehensive operating budget for the financial year 2024-2025",
+      description: "Comprehensive operating budget for the financial year 2023-2024",
       createdBy: adminId,
     };
 

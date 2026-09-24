@@ -30,11 +30,42 @@ class BudgetService {
   }
 
   async getBudgets() {
-    return budgetRepository.find({}, [
-      { path: "fiscalYear", select: "yearName" },
+    const budgets = await budgetRepository.find({}, [
+      { path: "fiscalYear", select: "yearName startDate endDate" },
       { path: "costCenter", select: "name code" },
       { path: "lineItems.account", select: "accountCode accountName" },
     ]);
+
+    // Compute actuals per budget from submitted journal entries so the UI
+    // can show utilisation without an extra request per budget.
+    const withActuals = await Promise.all(
+      budgets.map(async (budget) => {
+        const accountIds = (budget.lineItems || []).map((li) => li.account?._id ?? li.account);
+        let actualAmount = 0;
+        if (accountIds.length > 0 && budget.fiscalYear) {
+          const entries = await journalEntryRepository.find({
+            "lineItems.account": { $in: accountIds },
+            status: "Submitted",
+            date: {
+              $gte: budget.fiscalYear.startDate,
+              $lte: budget.fiscalYear.endDate,
+            },
+          });
+          const idSet = new Set(accountIds.map((id) => String(id)));
+          for (const je of entries) {
+            for (const li of je.lineItems || []) {
+              if (idSet.has(String(li.account))) {
+                actualAmount += Math.abs((li.debitAmount || 0) - (li.creditAmount || 0));
+              }
+            }
+          }
+        }
+        const plain = budget.toObject ? budget.toObject() : budget;
+        return { ...plain, actualAmount };
+      })
+    );
+
+    return withActuals;
   }
 
   async getBudgetById(id) {

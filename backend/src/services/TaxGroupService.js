@@ -37,7 +37,7 @@ class TaxGroupService {
   }
 
   async getTaxGroups() {
-    return taxGroupRepository.findAll();
+    return taxGroupRepository.find({}, "taxes.taxRate");
   }
 
   async getActiveTaxGroups() {

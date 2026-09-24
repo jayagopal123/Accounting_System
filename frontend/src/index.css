@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 150 22% 96%;        /* soft mint-white */
+    --foreground: 222 47% 11%;        /* ink #0f172a */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 161 94% 30%;           /* emerald #059669 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --accent-cyan: 189 94% 43%;       /* gradient partner */
+    --accent: 161 94% 96%;
+    --accent-foreground: 161 94% 20%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 161 94% 30%;
+    --radius: 0.85rem;
+    --success: 161 94% 30%;
+    --warning: 38 92% 50%;
+    --info: 217 91% 60%;
+    --sidebar: 222 47% 11%;           /* dark ink rail even in light mode */
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 161 94% 30%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 25% 18%;
+    --sidebar-ring: 161 94% 30%;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
+    --card: 222 40% 9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 40% 9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 161 94% 35%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 25% 14%;
+    --secondary-foreground: 210 40% 98%;
+    --accent-cyan: 189 94% 50%;
+    --accent: 161 94% 15%;
+    --accent-foreground: 161 94% 85%;
+    --muted: 217 25% 14%;
+    --muted-foreground: 215 20% 65%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 217 25% 18%;
+    --input: 217 25% 18%;
+    --ring: 161 94% 40%;
+    --sidebar: 222 47% 8%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 161 94% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 14%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 25% 14%;
+    --sidebar-ring: 161 94% 40%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Tabular numbers for all financial amounts and codes */
+.font-mono-numbers {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Glass panel */
+.glass-panel {
+  background-color: hsl(var(--background) / 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-width: 1px;
+  border-color: hsl(var(--border) / 0.8);
+}
+
+.dark .glass-panel {
+  background-color: hsl(var(--card) / 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Emerald to cyan gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent-cyan)) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Soft glow for buttons & highlights */
+.glow-primary {
+  box-shadow: 0 0 25px -5px hsl(var(--primary) / 0.35);
+}
+
+/* Subtle custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.4);
+}
+
+/* Clean print styling for vouchers and invoices */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print,
+  nav,
+  aside,
+  header,
+  button,
+  .print-hidden {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .print-page {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+}
