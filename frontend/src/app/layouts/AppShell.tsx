@@ -212,9 +212,6 @@ const SidebarContent: React.FC<{ onNavigate?: () => void }> = ({ onNavigate }) =
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const user = useAuthStore((s) => s.user);
   const canViewLogs = usePermission("audit_logs:view");
-  const canCreateSI = usePermission("sales_invoices:create");
-  const canCreatePI = usePermission("purchase_invoices:create");
-  const canCreate = canCreateSI || canCreatePI;
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
@@ -230,19 +227,6 @@ const SidebarContent: React.FC<{ onNavigate?: () => void }> = ({ onNavigate }) =
           </div>
         )}
       </div>
-
-      {/* New action */}
-      {canCreate && (
-        <div className="px-3 pt-3">
-          <Link
-            to="/sales-invoices/new"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:opacity-90"
-            onClick={onNavigate}
-          >
-            <Plus className="h-4 w-4" /> New Sales Invoice
-          </Link>
-        </div>
-      )}
 
       {/* Nav */}
       <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-3">
